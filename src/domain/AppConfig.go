@@ -17,6 +17,10 @@ type AppConfig struct {
 		Port string `yaml:"port"`
 		Host string `yaml:"host"`
 	} `yaml:"httpServer"`
+	TFTPServer struct {
+		Address string `yaml:"address"`
+		Port    string `yaml:"port"`
+	} `yaml:"tftpServer"`
 	Database struct {
 		Entity DbConfig `yaml:"entity"`
 		Log    DbConfig `yaml:"log"`

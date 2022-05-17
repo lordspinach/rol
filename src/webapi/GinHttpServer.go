@@ -47,5 +47,7 @@ func (server *GinHTTPServer) Start() {
 
 //StartHTTPServer starts a new http server from fx.Invoke
 func StartHTTPServer(server *GinHTTPServer) {
-	server.Start()
+	go func() {
+		server.Start()
+	}()
 }

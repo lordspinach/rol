@@ -6,7 +6,6 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
@@ -36,7 +35,7 @@ func NewGormEntityDb(cfg *domain.AppConfig) (*gorm.DB, error) {
 	}
 	dialector := mysql.Open(fmt.Sprintf("%s%s%s", connectionString, entityCfg.DbName, entityCfg.Parameters))
 	db, err := gorm.Open(dialector, &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		//Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("[NewGormEntityDb]: Failed to open db: %v", err)
@@ -67,7 +66,7 @@ func NewGormLogDb(cfg *domain.AppConfig) (*GormFxShell, error) {
 	}
 	dialector := mysql.Open(fmt.Sprintf("%s%s%s", connectionString, logCfg.DbName, logCfg.Parameters))
 	db, err := gorm.Open(dialector, &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		//Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("[NewGormLogDb]: Failed to open db: %v", err)

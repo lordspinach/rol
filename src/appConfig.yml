@@ -4,6 +4,11 @@ httpServer:
   host: "localhost"
   port: 8080
 
+# TFTP Server configurations
+tftpServer:
+  address: ""
+  port: 69
+
 # Database config [MySQL only]
 database:
   entity:
