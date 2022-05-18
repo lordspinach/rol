@@ -1,14 +1,12 @@
 package main
 
 import (
+	"go.uber.org/fx"
 	"rol/app/services"
+	_ "rol/docs"
 	"rol/infrastructure"
 	"rol/webapi"
 	"rol/webapi/controllers"
-
-	_ "rol/docs"
-
-	"go.uber.org/fx"
 )
 
 // @title Rack of labs API
@@ -26,6 +24,12 @@ import (
 // @host localhost:8080
 // @BasePath /api/v1/
 func main() {
+	TFTPServer := infrastructure.NewTFTPServer("", "69")
+	infrastructure.AddNewPathToTFTPRatio("MAC:123123/test.txt", "files/test.txt")
+	TFTPServer.Start()
+
+	//var a map[string]string
+	//fmt.Println(a)
 	app := fx.New(
 		fx.Provide(
 			// Realizations
