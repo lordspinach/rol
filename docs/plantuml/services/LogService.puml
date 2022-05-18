@@ -1,0 +1,23 @@
+@startuml
+!include GenericService.puml
+!include ../repositories/GenericRepository.puml
+!include ../dto/BaseDto.puml
+!include ../dto/Log/LogDto.puml
+!include ../entities/Log.puml
+
+class LogService<Log,LogDto> {
+
+}
+
+LogService *-- GenericService
+GenericService::repository -- GenericRepository
+
+together {
+  class LogService
+  class GenericRepository
+  class Log
+  class LogDto
+  class BaseDto
+}
+
+@enduml
