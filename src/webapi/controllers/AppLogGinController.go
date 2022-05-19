@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//NewAppLogGinController Application log GIN controller constructor
+//AppLogGinController Application log GIN controller structure
 type AppLogGinController struct {
 	GinGenericController[dtos.AppLogDto,
 		dtos.AppLogDto,
@@ -39,8 +39,8 @@ func RegisterAppLogController(controller *AppLogGinController, server *webapi.Gi
 // @param 	pageSize 		path	int		false	"number of entities per page"
 // @Success 200 {object} dtos.ResponseDataDto{data=dtos.PaginatedListDto{items=[]dtos.AppLogDto}} ""
 // @router /log/app/ [get]
-func (c *AppLogGinController) GetList(ctx *gin.Context) {
-	c.GinGenericController.GetList(ctx)
+func (a *AppLogGinController) GetList(ctx *gin.Context) {
+	a.GinGenericController.GetList(ctx)
 }
 
 // @Summary Gets http app by id
@@ -51,11 +51,11 @@ func (c *AppLogGinController) GetList(ctx *gin.Context) {
 // @param 	id	path	string		true	"log id"
 // @Success 200 {object} dtos.ResponseDataDto{data=dtos.AppLogDto}
 // @router /log/app/{id} [get]
-func (c *AppLogGinController) GetById(ctx *gin.Context) {
-	c.GinGenericController.GetById(ctx)
+func (a *AppLogGinController) GetById(ctx *gin.Context) {
+	a.GinGenericController.GetById(ctx)
 }
 
-//NewEthernetSwitchGinController ppp log controller constructor. Parameters pass through DI
+//NewAppLogGinController app log controller constructor. Parameters pass through DI
 //Params
 //	service - generic service
 //	log - logrus logger

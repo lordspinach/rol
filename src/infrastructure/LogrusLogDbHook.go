@@ -99,9 +99,9 @@ func NewAsyncAppHook(repo interfaces.IGenericRepository[domain.AppLog]) *AppAsyn
 	return hook
 }
 
-func (hook *AppHook) newEntry(entry *logrus.Entry) *logrus.Entry {
-	hook.mutex.RLock()
-	defer hook.mutex.RUnlock()
+func (h *AppHook) newEntry(entry *logrus.Entry) *logrus.Entry {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
 
 	return &logrus.Entry{
 		Logger:  entry.Logger,
@@ -117,9 +117,9 @@ func (hook *AppHook) newEntry(entry *logrus.Entry) *logrus.Entry {
 //	entry - logrus entry with fields to log
 //Return
 //	error - if error occurs return error, otherwise nil
-func (hook *AppHook) Fire(entry *logrus.Entry) error {
-	newEntry := hook.newEntry(entry)
-	return hook.InsertFunc(newEntry, hook.repo)
+func (h *AppHook) Fire(entry *logrus.Entry) error {
+	newEntry := h.newEntry(entry)
+	return h.InsertFunc(newEntry, h.repo)
 }
 
 //Fire run async hook insert function
@@ -180,7 +180,7 @@ func (hook *AppAsyncHook) fire() {
 }
 
 // Levels returns the available logging levels.
-func (hook *AppHook) Levels() []logrus.Level {
+func (h *AppHook) Levels() []logrus.Level {
 	return []logrus.Level{
 		logrus.FatalLevel,
 		logrus.ErrorLevel,

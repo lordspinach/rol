@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//NewEthernetSwitchGinController ethernet switch GIN controller constructor
+//EthernetSwitchGinController ethernet switch GIN controller structure
 type EthernetSwitchGinController struct {
 	GinGenericController[dtos.EthernetSwitchDto,
 		dtos.EthernetSwitchCreateDto,
@@ -42,8 +42,8 @@ func RegisterSwitchController(controller *EthernetSwitchGinController, server *w
 // @param 	pageSize 		path	int		false	"number of entities per page"
 // @Success 200 {object} dtos.ResponseDataDto{data=dtos.PaginatedListDto{items=[]dtos.EthernetSwitchDto}} "desc"
 // @router /switch/ [get]
-func (c *EthernetSwitchGinController) GetList(ctx *gin.Context) {
-	c.GinGenericController.GetList(ctx)
+func (e *EthernetSwitchGinController) GetList(ctx *gin.Context) {
+	e.GinGenericController.GetList(ctx)
 }
 
 // @Summary Gets ethernet switch by id
@@ -54,8 +54,8 @@ func (c *EthernetSwitchGinController) GetList(ctx *gin.Context) {
 // @param 	id	path	string		true	"ethernet switch id"
 // @Success 200 {object} dtos.ResponseDataDto{data=dtos.EthernetSwitchDto}
 // @router /switch/{id} [get]
-func (c *EthernetSwitchGinController) GetById(ctx *gin.Context) {
-	c.GinGenericController.GetById(ctx)
+func (e *EthernetSwitchGinController) GetById(ctx *gin.Context) {
+	e.GinGenericController.GetById(ctx)
 }
 
 // @Summary Creates new ethernet switch
@@ -66,9 +66,9 @@ func (c *EthernetSwitchGinController) GetById(ctx *gin.Context) {
 // @Param request body dtos.EthernetSwitchCreateDto true "ethernet switch fields"
 // @Success 200 {object} dtos.ResponseDataDto
 // @router /switch/ [post]
-func (c *EthernetSwitchGinController) Create(ctx *gin.Context) {
+func (e *EthernetSwitchGinController) Create(ctx *gin.Context) {
 
-	c.GinGenericController.Create(ctx)
+	e.GinGenericController.Create(ctx)
 }
 
 // @Summary Updates ethernet switch by id
@@ -79,8 +79,8 @@ func (c *EthernetSwitchGinController) Create(ctx *gin.Context) {
 // @Param request body dtos.EthernetSwitchUpdateDto true "ethernet switch fields"
 // @Success 200 {object} dtos.ResponseDto
 // @router /switch/{id} [put]
-func (c *EthernetSwitchGinController) Update(ctx *gin.Context) {
-	c.GinGenericController.Update(ctx)
+func (e *EthernetSwitchGinController) Update(ctx *gin.Context) {
+	e.GinGenericController.Update(ctx)
 }
 
 // @Summary Delete ethernet switch by id
@@ -91,8 +91,8 @@ func (c *EthernetSwitchGinController) Update(ctx *gin.Context) {
 // @param 	id	path	string		true	"ethernet switch id"
 // @Success 200 {object} dtos.ResponseDto
 // @router /switch/{id} [delete]
-func (c *EthernetSwitchGinController) Delete(ctx *gin.Context) {
-	c.GinGenericController.Delete(ctx)
+func (e *EthernetSwitchGinController) Delete(ctx *gin.Context) {
+	e.GinGenericController.Delete(ctx)
 }
 
 //NewEthernetSwitchGinController ethernet switch controller constructor. Parameters pass through DI

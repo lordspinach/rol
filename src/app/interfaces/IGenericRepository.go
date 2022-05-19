@@ -31,14 +31,14 @@ type IGenericRepository[EntityType IEntityModel] interface {
 	//Return
 	//	IQueryBuilder pointer to object that implements IQueryBuilder interface for this repository
 	NewQueryBuilder(ctx context.Context) IQueryBuilder
-	//GetById
+	//GetByID
 	//	Get entity by ID from repository.
 	//Params
 	//	id - entity id
 	//Return
 	//  *EntityType - pointer to the entity.
 	//	error - if an error occurred, otherwise nil
-	GetById(ctx context.Context, id uuid.UUID) (*EntityType, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*EntityType, error)
 	//Update
 	//	Save the changes to the existing entity in the repository.
 	//Params

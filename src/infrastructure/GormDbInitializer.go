@@ -16,7 +16,7 @@ type OurNamingSchema struct {
 }
 
 // TableName convert string to table name
-func (ns OurNamingSchema) TableName(str string) string {
+func (o OurNamingSchema) TableName(str string) string {
 	defaultNamingStrategy := schema.NamingStrategy{}
 	return defaultNamingStrategy.TableName(str)
 }

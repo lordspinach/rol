@@ -111,9 +111,9 @@ func NewAsyncHttpHook(repo *GormGenericRepository[domain.HTTPLog]) *HttpAsyncHoo
 	return hook
 }
 
-func (hook *HttpHook) newEntry(entry *logrus.Entry) *logrus.Entry {
-	hook.mutex.RLock()
-	defer hook.mutex.RUnlock()
+func (h *HttpHook) newEntry(entry *logrus.Entry) *logrus.Entry {
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()
 
 	return &logrus.Entry{
 		Logger:  entry.Logger,
@@ -129,9 +129,9 @@ func (hook *HttpHook) newEntry(entry *logrus.Entry) *logrus.Entry {
 //	entry - logrus entry with fields to log
 //Return
 //	error - if error occurs return error, otherwise nil
-func (hook *HttpHook) Fire(entry *logrus.Entry) error {
-	newEntry := hook.newEntry(entry)
-	return hook.InsertFunc(newEntry, hook.repo)
+func (h *HttpHook) Fire(entry *logrus.Entry) error {
+	newEntry := h.newEntry(entry)
+	return h.InsertFunc(newEntry, h.repo)
 }
 
 //Fire run async hook insert function
@@ -191,7 +191,7 @@ func (hook *HttpAsyncHook) fire() {
 }
 
 //Levels returns the available logging levels.
-func (hook *HttpHook) Levels() []logrus.Level {
+func (h *HttpHook) Levels() []logrus.Level {
 	return []logrus.Level{
 		logrus.FatalLevel,
 		logrus.ErrorLevel,

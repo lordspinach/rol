@@ -51,7 +51,7 @@ func NewGinGenericController[DtoType interface{},
 //	ctx - gin context
 //Return
 //	Returns http status code and response dto
-func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GetList(ctx *gin.Context) {
+func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GetList(ctx *gin.Context) {
 	orderBy := ctx.DefaultQuery("orderBy", "id")
 	orderDirection := ctx.DefaultQuery("orderDirection", "asc")
 	search := ctx.DefaultQuery("search", "")
@@ -65,7 +65,7 @@ func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityTyp
 	if err != nil {
 		pageSizeInt64 = 10
 	}
-	paginatedList, err := ggc.service.GetList(ctx, search, orderBy, orderDirection, int(pageInt64), int(pageSizeInt64))
+	paginatedList, err := g.service.GetList(ctx, search, orderBy, orderDirection, int(pageInt64), int(pageSizeInt64))
 	responseDto := &dtos.ResponseDataDto{
 		Status: dtos.ResponseStatusDto{
 			Code:    0,
@@ -76,20 +76,20 @@ func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityTyp
 	ctx.JSON(http.StatusOK, responseDto)
 }
 
-//GetById Get entity by id
+//GetByID Get entity by id
 //Params
 //	ctx - gin context
 //Return
 //	Returns http status code and response dto
-func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GetById(ctx *gin.Context) {
-	strId := ctx.Param("id")
-	id, err := uuid.Parse(strId)
+func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GetByID(ctx *gin.Context) {
+	strID := ctx.Param("id")
+	id, err := uuid.Parse(strID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	dto, err := ggc.service.GetById(ctx, id)
+	dto, err := g.service.GetByID(ctx, id)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -113,7 +113,7 @@ func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityTyp
 //	ctx - gin context
 //Return
 //	Returns http status code and response dto
-func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Create(ctx *gin.Context) {
+func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Create(ctx *gin.Context) {
 	reqDto := new(CreateDtoType)
 	err := ctx.ShouldBindJSON(&reqDto)
 	if err != nil {
@@ -129,7 +129,7 @@ func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityTyp
 	}
 	ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
 
-	id, err := ggc.service.Create(ctx, *reqDto)
+	id, err := g.service.Create(ctx, *reqDto)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -150,7 +150,7 @@ func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityTyp
 //	ctx - gin context
 //Return
 //	Returns http status code and response dto
-func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Update(ctx *gin.Context) {
+func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Update(ctx *gin.Context) {
 	reqDto := new(UpdateDtoType)
 	err := ctx.ShouldBindJSON(reqDto)
 	if err != nil {
@@ -170,10 +170,10 @@ func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityTyp
 		return
 	}
 
-	strId := ctx.Param("id")
-	id := uuid.MustParse(strId)
+	strID := ctx.Param("id")
+	id := uuid.MustParse(strID)
 
-	err = ggc.service.Update(ctx, *reqDto, id)
+	err = g.service.Update(ctx, *reqDto, id)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -193,11 +193,11 @@ func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityTyp
 //	ctx - gin context
 //Return
 //	Returns http status code and response dto
-func (ggc *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Delete(ctx *gin.Context) {
-	strId := ctx.Param("id")
-	id := uuid.MustParse(strId)
+func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Delete(ctx *gin.Context) {
+	strID := ctx.Param("id")
+	id := uuid.MustParse(strID)
 
-	err := ggc.service.Delete(ctx, id)
+	err := g.service.Delete(ctx, id)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return

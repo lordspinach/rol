@@ -23,7 +23,7 @@ func RegisterHTTPLogController(controller *HTTPLogGinController, server *webapi.
 	groupRoute := server.Engine.Group("/api/v1")
 
 	groupRoute.GET("/log/http/", controller.GetList)
-	groupRoute.GET("/log/http/:id", controller.GetById)
+	groupRoute.GET("/log/http/:id", controller.GetByID)
 }
 
 // @Summary Gets paginated list of http logs
@@ -38,8 +38,8 @@ func RegisterHTTPLogController(controller *HTTPLogGinController, server *webapi.
 // @param 	pageSize 		path	int		false	"number of entities per page"
 // @Success 200 {object} dtos.ResponseDataDto{data=dtos.PaginatedListDto{items=[]dtos.HTTPLogDto}} "desc"
 // @router /log/http/ [get]
-func (c *HTTPLogGinController) GetList(ctx *gin.Context) {
-	c.GinGenericController.GetList(ctx)
+func (h *HTTPLogGinController) GetList(ctx *gin.Context) {
+	h.GinGenericController.GetList(ctx)
 }
 
 // @Summary Gets http log by id
@@ -50,8 +50,8 @@ func (c *HTTPLogGinController) GetList(ctx *gin.Context) {
 // @param 	id	path	string		true	"log id"
 // @Success 200 {object} dtos.ResponseDataDto{data=dtos.HTTPLogDto}
 // @router /log/http/{id} [get]
-func (c *HTTPLogGinController) GetById(ctx *gin.Context) {
-	c.GinGenericController.GetById(ctx)
+func (h *HTTPLogGinController) GetByID(ctx *gin.Context) {
+	h.GinGenericController.GetByID(ctx)
 }
 
 //NewHTTPLogGinController HTTP log controller constructor. Parameters pass through DI
