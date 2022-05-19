@@ -35,13 +35,13 @@ func NewGormGenericRepository[EntityType interfaces.IEntityModel](db *gorm.DB, l
 
 func (ger *GormGenericRepository[EntityType]) log(ctx context.Context, level, message string) {
 	if ctx != nil {
-		actionId := uuid.UUID{}
-		if ctx.Value("requestId") != nil {
-			actionId = ctx.Value("requestId").(uuid.UUID)
+		actionID := uuid.UUID{}
+		if ctx.Value("requestID") != nil {
+			actionID = ctx.Value("requestID").(uuid.UUID)
 		}
 
 		entry := ger.logger.WithFields(logrus.Fields{
-			"actionId": actionId,
+			"actionID": actionID,
 			"source":   ger.logSourceName,
 		})
 		switch level {

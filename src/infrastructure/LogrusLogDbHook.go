@@ -51,10 +51,10 @@ var asyncAppInsertFunc = func(entry *logrus.Entry, repository interfaces.IGeneri
 }
 
 func newEntityFromApp(entry *logrus.Entry) *domain.AppLog {
-	var actionId uuid.UUID
+	var actionID uuid.UUID
 	var source string
-	if entry.Data["actionId"] != nil {
-		actionId = entry.Data["actionId"].(uuid.UUID)
+	if entry.Data["actionID"] != nil {
+		actionID = entry.Data["actionID"].(uuid.UUID)
 	}
 	if entry.Data["source"] != nil {
 		source = entry.Data["source"].(string)
@@ -65,7 +65,7 @@ func newEntityFromApp(entry *logrus.Entry) *domain.AppLog {
 		},
 		Level:    entry.Level.String(),
 		Source:   source,
-		ActionID: actionId,
+		ActionID: actionID,
 		Message:  entry.Message,
 	}
 }
