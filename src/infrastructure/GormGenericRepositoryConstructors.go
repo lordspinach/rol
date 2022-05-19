@@ -10,18 +10,6 @@ import (
 
 // This needed only for FX DI framework
 
-
-//NewAppLogRepository constructor for domain.AppLog GORM generic repository
-//Params
-//	dbShell - gorm database shell
-//	log - logrus logger
-//Return
-//	generic.IGenericRepository[domain.AppLog] - new app log repository
-func NewAppLogRepository(dbShell *GormFxShell, log *logrus.Logger) interfaces.IGenericRepository[domain.AppLog] {
-	db := dbShell.GetDb()
-	return NewGormGenericRepository[domain.AppLog](db, log)
-}
-
 //NewEthernetSwitchPortRepository preparing domain.EthernetSwitchPort repository for passing it in DI
 //Params
 //	db - gorm database
