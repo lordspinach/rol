@@ -10,15 +10,6 @@ import (
 
 // This needed only for FX DI framework
 
-//NewEthernetSwitchRepository constructor for domain.EthernetSwitch GORM generic repository
-//Params
-//	db - gorm database
-//	log - logrus logger
-//Return
-//	generic.IGenericRepository[domain.EthernetSwitch] - new ethernet switch repository
-func NewEthernetSwitchRepository(db *gorm.DB, log *logrus.Logger) interfaces.IGenericRepository[domain.EthernetSwitch] {
-	return NewGormGenericRepository[domain.EthernetSwitch](db, log)
-}
 
 //NewHTTPLogRepository constructor for domain.HTTPLog GORM generic repository
 //Params
