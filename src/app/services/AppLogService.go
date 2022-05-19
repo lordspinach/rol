@@ -8,6 +8,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type AppLogService struct {
+	*GenericService[dtos.AppLogDto,
+		dtos.AppLogDto,
+		dtos.AppLogDto,
+		domain.AppLog]
+}
+
 //NewAppLogService preparing domain.AppLog repository for passing it in DI
 //Params
 //	rep - generic repository with http log instantiated
@@ -19,5 +26,8 @@ func NewAppLogService(rep interfaces.IGenericRepository[domain.AppLog], log *log
 	dtos.AppLogDto,
 	dtos.AppLogDto,
 	domain.AppLog], error) {
-	return NewGenericService[dtos.AppLogDto, dtos.AppLogDto, dtos.AppLogDto](rep, log)
+	genericService, err := NewGenericService[dtos.AppLogDto, dtos.AppLogDto, dtos.AppLogDto](rep, log)
+	return &AppLogService{
+		genericService,
+	}, err
 }
