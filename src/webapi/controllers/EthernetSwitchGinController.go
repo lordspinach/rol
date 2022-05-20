@@ -55,7 +55,7 @@ func (e *EthernetSwitchGinController) GetList(ctx *gin.Context) {
 // @Success 200 {object} dtos.ResponseDataDto{data=dtos.EthernetSwitchDto}
 // @router /switch/{id} [get]
 func (e *EthernetSwitchGinController) GetById(ctx *gin.Context) {
-	e.GinGenericController.GetById(ctx)
+	e.GinGenericController.GetByID(ctx)
 }
 
 // @Summary Creates new ethernet switch

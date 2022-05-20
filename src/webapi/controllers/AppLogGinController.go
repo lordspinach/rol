@@ -52,7 +52,7 @@ func (a *AppLogGinController) GetList(ctx *gin.Context) {
 // @Success 200 {object} dtos.ResponseDataDto{data=dtos.AppLogDto}
 // @router /log/app/{id} [get]
 func (a *AppLogGinController) GetById(ctx *gin.Context) {
-	a.GinGenericController.GetById(ctx)
+	a.GinGenericController.GetByID(ctx)
 }
 
 //NewAppLogGinController app log controller constructor. Parameters pass through DI
