@@ -24,12 +24,11 @@ import (
 // @host localhost:8080
 // @BasePath /api/v1/
 func main() {
-	TFTPServer := infrastructure.NewTFTPServer("", "69")
-	infrastructure.AddNewPathToTFTPRatio("MAC:123123/test.txt", "files/test.txt")
+	TFTPServer := infrastructure.NewTFTPServer("192.168.88.254", "69", nil)
+	TFTPServer.AddNewPathToTFTPRatio("MAC123123/test.txt", "files/test.txt")
 	TFTPServer.Start()
+	TFTPServer.AddNewPathToTFTPRatio("MAC322/test.txt", "files/test.txt")
 
-	//var a map[string]string
-	//fmt.Println(a)
 	app := fx.New(
 		fx.Provide(
 			// Realizations
