@@ -31,6 +31,10 @@ func (g *GormQueryBuilder) addQuery(condition, fieldName, comparator string, val
 	if len(g.QueryString) > 0 {
 		g.QueryString += fmt.Sprintf(" %s ", condition)
 	}
+	if value == "NULL" {
+		g.QueryString += fmt.Sprintf("%s is NULL", ToSnakeCase(fieldName))
+		return g
+	}
 	g.QueryString += fmt.Sprintf("%s %s ?", ToSnakeCase(fieldName), comparator)
 	g.Values = append(g.Values, value)
 	return g

@@ -4,16 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"rol/app/interfaces"
 	"rol/app/mappers"
 	"rol/app/utils"
 	"rol/dtos"
 	"strings"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 //GenericService generic service structure for IEntityModel
@@ -67,12 +65,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) log(
 }
 
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) excludeDeleted(queryBuilder interfaces.IQueryBuilder) {
-	date, err := time.Parse("2006-01-02", "1999-01-01")
-	if err != nil {
-		g.logger.Errorf("time parse error: %s", err.Error())
-		return
-	}
-	queryBuilder.Where("DeletedAt", "<", date)
+	queryBuilder.Where("DeletedAt", "is", "NULL")
 }
 
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) addSearchInAllFields(search string, queryBuilder interfaces.IQueryBuilder) {

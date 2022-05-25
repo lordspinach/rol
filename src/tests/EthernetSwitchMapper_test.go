@@ -33,12 +33,13 @@ func Test_EthernetSwitchCreateDtoToEntity(t *testing.T) {
 
 func Test_EthernetSwitchEntityToDto(t *testing.T) {
 	tester := NewGenericMapperToEntity[dtos.EthernetSwitchDto, domain.EthernetSwitch]()
+	timeNow := time.Now()
 	entity := domain.EthernetSwitch{
 		Entity: domain.Entity{
 			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			DeletedAt: time.Now(),
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+			DeletedAt: &timeNow,
 		},
 		Name:        "ASD",
 		Serial:      "asd",
