@@ -16,7 +16,7 @@ type GenericRepositoryTest[EntityType interfaces.IEntityModel] struct {
 	Logger     *logrus.Logger
 	Context    context.Context
 	DbName     string
-	InsertedId uuid.UUID
+	InsertedID uuid.UUID
 }
 
 func NewGenericRepositoryTest[EntityType interfaces.IEntityModel](repo interfaces.IGenericRepository[EntityType], dbName string) *GenericRepositoryTest[EntityType] {
@@ -30,24 +30,24 @@ func NewGenericRepositoryTest[EntityType interfaces.IEntityModel](repo interface
 
 func (grt *GenericRepositoryTest[EntityType]) GenericRepository_Insert(entity EntityType) error {
 	var err error
-	grt.InsertedId, err = grt.Repository.Insert(grt.Context, entity)
+	grt.InsertedID, err = grt.Repository.Insert(grt.Context, entity)
 	if err != nil {
 		return fmt.Errorf("insert failed: %s", err)
 	}
 	return nil
 }
 
-func (grt *GenericRepositoryTest[EntityType]) GenericRepository_GetById(id uuid.UUID) error {
-	entity, err := grt.Repository.GetById(grt.Context, id)
+func (grt *GenericRepositoryTest[EntityType]) GenericRepository_GetByID(id uuid.UUID) error {
+	entity, err := grt.Repository.GetByID(grt.Context, id)
 	if err != nil {
 		return fmt.Errorf("get by id failed: %s", err)
 	}
 
 	value := reflect.ValueOf(*entity).FieldByName("ID")
 
-	obtainedId, err := getUuidFromReflectArray(value)
-	if obtainedId != id {
-		return fmt.Errorf("unexpected id %d, expect %d", obtainedId, id)
+	obtainedID, err := getUuidFromReflectArray(value)
+	if obtainedID != id {
+		return fmt.Errorf("unexpected id %d, expect %d", obtainedID, id)
 	}
 	return nil
 }
@@ -58,7 +58,7 @@ func (grt *GenericRepositoryTest[EntityType]) GenericRepository_Update(entity En
 	if err != nil {
 		return fmt.Errorf("update failed:  %s", err)
 	}
-	updatedEntity, err := grt.Repository.GetById(grt.Context, grt.InsertedId)
+	updatedEntity, err := grt.Repository.GetByID(grt.Context, grt.InsertedID)
 	if err != nil {
 		return fmt.Errorf("get by id failed:  %s", err)
 	}
@@ -105,17 +105,17 @@ func (grt *GenericRepositoryTest[EntityType]) GenericRepository_Pagination(page,
 		return fmt.Errorf("array length on next page %d, expect %d", len(*entityArrSecondPage), size)
 	}
 	firstPageValue := reflect.ValueOf(*entityArrFirstPage).Index(0).FieldByName("ID")
-	firstPageId, err := getUuidFromReflectArray(firstPageValue)
+	firstPageID, err := getUuidFromReflectArray(firstPageValue)
 	if err != nil {
 		return fmt.Errorf("convert reflect array to uuid failed: %s", err)
 	}
 	secondPageValue := reflect.ValueOf(*entityArrSecondPage).Index(0).FieldByName("ID")
-	secondPageId, err := getUuidFromReflectArray(secondPageValue)
+	secondPageID, err := getUuidFromReflectArray(secondPageValue)
 	if err != nil {
 		return fmt.Errorf("convert reflect array to uuid failed: %s", err)
 	}
-	if firstPageId == secondPageId {
-		return fmt.Errorf("pagination failed: got same element on second page with ID: %d", firstPageId)
+	if firstPageID == secondPageID {
+		return fmt.Errorf("pagination failed: got same element on second page with ID: %d", firstPageID)
 	}
 	return nil
 }

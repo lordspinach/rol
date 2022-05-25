@@ -63,8 +63,8 @@ func Test_EthernetSwitchRepository_Insert(t *testing.T) {
 	}
 }
 
-func Test_EthernetSwitchRepository_GetById(t *testing.T) {
-	err := testerSwitchRepository.GenericRepository_GetById(testerSwitchRepository.InsertedId)
+func Test_EthernetSwitchRepository_GetByID(t *testing.T) {
+	err := testerSwitchRepository.GenericRepository_GetByID(testerSwitchRepository.InsertedID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -72,7 +72,7 @@ func Test_EthernetSwitchRepository_GetById(t *testing.T) {
 
 func Test_EthernetSwitchRepository_Update(t *testing.T) {
 	entity := domain.EthernetSwitch{
-		Entity:      domain.Entity{ID: testerSwitchRepository.InsertedId},
+		Entity:      domain.Entity{ID: testerSwitchRepository.InsertedID},
 		Name:        "AutoTestingUpdated",
 		Serial:      "1",
 		SwitchModel: 0,
@@ -95,7 +95,7 @@ func Test_EthernetSwitchRepository_GetList(t *testing.T) {
 }
 
 func Test_EthernetSwitchRepository_Delete(t *testing.T) {
-	err := testerSwitchRepository.GenericRepository_Delete(testerSwitchRepository.InsertedId)
+	err := testerSwitchRepository.GenericRepository_Delete(testerSwitchRepository.InsertedID)
 	if err != nil {
 		t.Error(err)
 	}

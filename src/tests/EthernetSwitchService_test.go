@@ -67,8 +67,8 @@ func Test_EthernetSwitchService_Create(t *testing.T) {
 	}
 }
 
-func Test_EthernetSwitchService_GetById(t *testing.T) {
-	err := testerSwitchService.GenericService_GetById(testerSwitchService.InsertedId)
+func Test_EthernetSwitchService_GetByID(t *testing.T) {
+	err := testerSwitchService.GenericService_GetByID(testerSwitchService.InsertedID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -85,14 +85,14 @@ func Test_EthernetSwitchService_Update(t *testing.T) {
 		},
 		Password: "Test",
 	}
-	err := testerSwitchService.GenericService_Update(updateDto, testerSwitchService.InsertedId)
+	err := testerSwitchService.GenericService_Update(updateDto, testerSwitchService.InsertedID)
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func Test_EthernetSwitchService_Delete(t *testing.T) {
-	err := testerSwitchService.GenericService_Delete(testerSwitchService.InsertedId)
+	err := testerSwitchService.GenericService_Delete(testerSwitchService.InsertedID)
 	if err != nil {
 		t.Error(err)
 	}
