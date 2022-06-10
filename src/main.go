@@ -2,11 +2,10 @@ package main
 
 import (
 	"rol/app/services"
+	_ "rol/docs"
 	"rol/infrastructure"
 	"rol/webapi"
 	"rol/webapi/controllers"
-
-	_ "rol/docs"
 
 	"go.uber.org/fx"
 )
