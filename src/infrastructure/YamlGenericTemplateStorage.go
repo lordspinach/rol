@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 //YamlGenericTemplateStorage is a storage for yaml templates
@@ -26,6 +27,12 @@ type YamlGenericTemplateStorage[TemplateType domain.DeviceTemplate] struct {
 	logSourceName      string
 }
 
+type QueryUnit struct {
+	FieldName  string
+	Comparator string
+	ValueIndex int
+}
+
 //NewYamlGenericTemplateStorage is a constructor for YamlGenericTemplateStorage
 //
 //Params:
@@ -34,7 +41,9 @@ type YamlGenericTemplateStorage[TemplateType domain.DeviceTemplate] struct {
 func NewYamlGenericTemplateStorage[TemplateType domain.DeviceTemplate](dirName string, log *logrus.Logger) *YamlGenericTemplateStorage[TemplateType] {
 	model := new(TemplateType)
 	_, b, _, _ := runtime.Caller(0)
-	templatesDirectory := path.Join(filepath.Dir(b), dirName)
+	rootPath := filepath.Join(filepath.Dir(b), "../")
+
+	templatesDirectory := path.Join(rootPath, dirName)
 	return &YamlGenericTemplateStorage[TemplateType]{
 		TemplatesDirectory: templatesDirectory,
 		logger:             log,
@@ -99,7 +108,6 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetByName(ctx context.Context
 //
 //Params:
 //	ctx - context is used only for logging
-//	search - word for search in templates
 //	orderBy - order by string parameter
 //	orderDirection - ascending or descending order
 //	page - page number
@@ -110,6 +118,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetByName(ctx context.Context
 //	error - if an error occurs, otherwise nil
 func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, orderBy, orderDirection string, page, pageSize int, queryBuilder interfaces.IQueryBuilder) (*[]TemplateType, error) {
 	var templatesSlice []TemplateType
+	offset := (page - 1) * pageSize
 	files, err := ioutil.ReadDir(y.TemplatesDirectory)
 	if err != nil {
 		return nil, err
@@ -121,13 +130,40 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, 
 		}
 		templatesSlice = append(templatesSlice, *template)
 	}
-	queryBuild, err := queryBuilder.Build()
+
+	var templates *[]TemplateType
+	if queryBuilder != nil {
+		queryStr, err := queryBuilder.Build()
+		if err != nil {
+			return nil, err
+		}
+		queryArr := queryStr.([]interface{})
+		templates, err = y.handleQuery(templatesSlice, queryArr...)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		templates = &templatesSlice
+	}
+
+	y.sortTemplatesSlice(templates, orderBy, orderDirection)
+	paginatedSlice, err := y.getPaginatedSlice(*templates, offset, pageSize)
 	if err != nil {
 		return nil, err
 	}
-	y.find(&templatesSlice, queryBuild)
-	y.sortTemplatesSlice(&templatesSlice, orderBy, orderDirection)
-	return &templatesSlice, nil
+
+	return &paginatedSlice, nil
+}
+
+func (y *YamlGenericTemplateStorage[TemplateType]) getPaginatedSlice(templates []TemplateType, offset, limit int) ([]TemplateType, error) {
+	limit += offset
+	if offset > len(templates) {
+		return nil, fmt.Errorf("paginated slice offset bounds out of range [%d:] with length %d", offset, len(templates))
+	}
+	if limit > len(templates) {
+		return templates[offset:], nil
+	}
+	return templates[offset:limit], nil
 }
 
 //Count gets total count of templates with current query
@@ -150,8 +186,13 @@ func (y *YamlGenericTemplateStorage[TemplateType]) Count(ctx context.Context, qu
 		}
 		templatesSlice = append(templatesSlice, *template)
 	}
-	y.find(&templatesSlice, queryBuilder)
-	return int64(len(templatesSlice)), nil
+	queryStr, err := queryBuilder.Build()
+	if err != nil {
+		return 0, err
+	}
+	queryArr := queryStr.([]interface{})
+	foundTemplates, err := y.handleQuery(templatesSlice, queryArr...)
+	return int64(len(*foundTemplates)), nil
 }
 
 //NewQueryBuilder gets new query builder
@@ -163,131 +204,147 @@ func (y *YamlGenericTemplateStorage[TemplateType]) NewQueryBuilder(ctx context.C
 	return NewYamlQueryBuilder()
 }
 
-func getSuitabilityOfValuesForConditions(condition Condition, templateReflect reflect.Value) bool {
-	var valueMeetsCondition bool
-	var conditions []bool
-	for key, values := range condition.ConditionsMap {
-		keySlice := strings.Split(key, " ")
-		fieldName := keySlice[0]
-		comparator := keySlice[1]
-
-		for _, value := range values {
-			var templateField any
-			fieldReflect := templateReflect.FieldByName(fieldName)
-			switch fieldReflect.Kind() {
-			case reflect.String:
-				templateField = templateReflect.FieldByName(fieldName).String()
-			case reflect.Int:
-				templateField = templateReflect.FieldByName(fieldName).Int()
-			}
-
-			switch comparator {
-			case "==":
-				conditions = append(conditions, templateField == value)
-			case "!=":
-				conditions = append(conditions, templateField != value)
-			case ">":
-				conditions = append(conditions, isBigger(templateField, value))
-			case "<":
-				conditions = append(conditions, isLesser(templateField, value))
-			case ">=":
-				conditions = append(conditions, isBiggerOrEqual(templateField, value))
-			case "<=":
-				conditions = append(conditions, isLesserOrEqual(templateField, value))
-			}
-		}
-		if len(conditions) == 1 {
-			valueMeetsCondition = conditions[0]
-		} else if len(conditions) > 1 {
-			for i := 0; i < len(conditions); i++ {
-				if condition.Type == AND {
-					valueMeetsCondition = valueMeetsCondition && conditions[i]
-				} else {
-					valueMeetsCondition = valueMeetsCondition || conditions[i]
-				}
-			}
-		}
+func (y *YamlGenericTemplateStorage[TemplateType]) handleQuery(templatesSlice []TemplateType, args ...interface{}) (*[]TemplateType, error) {
+	if len(args) < 1 {
+		return &templatesSlice, nil
 	}
-	return valueMeetsCondition
-}
-
-func mergeSuitabilities(first, second map[int]bool, mergeType LogicType) map[int]bool {
-	var out = make(map[int]bool)
-	if len(first) > 0 {
-		for i, firstVal := range first {
-			if second[i] {
-				if mergeType == OR {
-					out[i] = firstVal || second[i]
-				} else {
-					out[i] = firstVal && second[i]
-				}
+	query := replaceQuestionsToIndexes(args[0].(string))
+	queryValues := args[1:]
+	finalSlice := &[]TemplateType{}
+	for _, template := range templatesSlice {
+		queryForTemplate := query
+		startIndex, endIndex := findLowerQueryIndexes(queryForTemplate)
+		for {
+			if startIndex == -1 && endIndex == -1 {
+				break
+			}
+			result, _ := handleSimpleQuery(template, queryForTemplate[startIndex+1:endIndex-1], queryValues)
+			if result {
+				queryForTemplate = replaceWithFakeTrueQuery(queryForTemplate, startIndex, endIndex)
 			} else {
-				out[i] = firstVal
+				queryForTemplate = replaceWithFakeFalseQuery(queryForTemplate, startIndex, endIndex)
 			}
+			startIndex, endIndex = findLowerQueryIndexes(queryForTemplate)
 		}
-	} else {
-		for i, secondVal := range second {
-			out[i] = secondVal
+		result, _ := handleSimpleQuery(template, queryForTemplate, queryValues)
+		if result {
+			*finalSlice = append(*finalSlice, template)
 		}
 	}
-	return out
+	return finalSlice, nil
 }
 
-func (y *YamlGenericTemplateStorage[TemplateType]) find(templatesSlice *[]TemplateType, queryMaps interface{}) {
-	suiteOfConditions := queryMaps.(*[]SuiteOfConditions)
-
-	for templateIndex, template := range *templatesSlice {
-		templateReflect := reflect.ValueOf(template)
-		for conditionIndex, condition := range *suiteOfConditions {
-			condition.AndMap.Suitability[templateIndex] = getSuitabilityOfValuesForConditions(condition.AndMap, templateReflect)
-			condition.OrMap.Suitability[templateIndex] = getSuitabilityOfValuesForConditions(condition.OrMap, templateReflect)
-			merged := mergeSuitabilities(condition.AndMap.Suitability, condition.OrMap.Suitability, OR)
-			(*suiteOfConditions)[conditionIndex].MergedSuitability = merged
+func handleSimpleQuery(template interface{}, query string, queryValues []interface{}) (bool, error) {
+	condition := ""
+	queryUnitString, lastParsedIndex := getQueryUnitString(query, 0)
+	result := false
+	for {
+		if len(queryUnitString) < 3 {
+			break
 		}
-	}
-	templatesInterface := reflect.ValueOf(templatesSlice).Interface()
-
-	var globalSuitability = make(map[int]bool)
-	if len(*suiteOfConditions) > 1 {
-		for i := 0; i < len(*suiteOfConditions); i++ {
-			if i <= len(*suiteOfConditions)-2 {
-				globalSuitability = mergeSuitabilities((*suiteOfConditions)[i].MergedSuitability, (*suiteOfConditions)[i+1].MergedSuitability, (*suiteOfConditions)[i+1].SuiteType)
-			}
+		queryUnit, err := parseQueryUnitString(strings.Trim(queryUnitString, " "))
+		if err != nil {
+			return false, err
 		}
-	} else {
-		globalSuitability = (*suiteOfConditions)[0].MergedSuitability
-	}
+		value := queryValues[queryUnit.ValueIndex]
 
-	descMapKeys := getDescendingMapKeys(globalSuitability)
-	for _, i := range descMapKeys {
-		meetsCondition := globalSuitability[i]
-		if !meetsCondition {
-			remove(templatesInterface.(*[]domain.DeviceTemplate), i)
+		if condition == "" {
+			result = getResultOfQueryUnit(template, queryUnit, value)
 		}
+		if condition == "AND" {
+			result = result && getResultOfQueryUnit(template, queryUnit, value)
+		}
+		if condition == "OR" {
+			result = result || getResultOfQueryUnit(template, queryUnit, value)
+		}
+		// Get condition if exist for the next iteration
+		condition, lastParsedIndex = getConditionString(query, lastParsedIndex)
+		queryUnitString, lastParsedIndex = getQueryUnitString(query, lastParsedIndex)
 	}
-
+	return result, nil
 }
 
-func remove(slice *[]domain.DeviceTemplate, i int) {
-	s := *slice
-	if len(s) > 1 {
-		s = append((*slice)[:i], (*slice)[i+1:]...)
-		*slice = s
-	} else {
-		*slice = make([]domain.DeviceTemplate, 0)
+func replaceQuestionsToIndexes(query string) string {
+	count := strings.Count(query, "?")
+	for i := 0; i < count; i++ {
+		query = strings.Replace(query, "?", strconv.Itoa(i), 1)
 	}
+	return query
+}
+
+func findLowerQueryIndexes(query string) (int, int) {
+	endIndexOfQueryGroup := strings.Index(query, ")")
+	if endIndexOfQueryGroup < 1 {
+		return -1, -1
+	}
+	endIndexOfQueryGroup = endIndexOfQueryGroup + 1
+	startIndexOfQueryGroup := strings.LastIndex(query[0:endIndexOfQueryGroup], "(")
+	return startIndexOfQueryGroup, endIndexOfQueryGroup
+}
+
+func findConditionIndexAndLen(query string, searchStartIndex int) (int, int) {
+	searchAbleQuery := query[searchStartIndex:]
+	andIndex := strings.Index(searchAbleQuery, " AND ")
+	orIndex := strings.Index(searchAbleQuery, " OR ")
+	if orIndex != -1 && andIndex != -1 {
+		if andIndex < orIndex {
+			return searchStartIndex + andIndex + 1, 3
+		}
+		return searchStartIndex + orIndex + 1, 2
+	}
+	if orIndex != -1 {
+		return searchStartIndex + orIndex + 1, 2
+	}
+	if andIndex != -1 {
+		return searchStartIndex + andIndex + 1, 3
+	}
+	return -1, -1
+}
+
+func getFieldValue(template interface{}, fieldName string) interface{} {
+	valueOfTemplate := reflect.ValueOf(template)
+	if valueOfTemplate.Kind() == reflect.Ptr {
+		valueOfTemplate = valueOfTemplate.Elem()
+	}
+	fieldReflect := valueOfTemplate.FieldByName(fieldName)
+	var fieldValue interface{}
+	switch fieldReflect.Kind() {
+	case reflect.String:
+		fieldValue = valueOfTemplate.FieldByName(fieldName).String()
+	case reflect.Int:
+		fieldValue = int(valueOfTemplate.FieldByName(fieldName).Int())
+	case reflect.Struct:
+		if fieldReflect.Type().String() == "time.Time" {
+			fieldValue = valueOfTemplate.FieldByName(fieldName).Interface().(time.Time)
+		}
+	}
+	return fieldValue
+}
+
+func parseQueryUnitString(queryUnit string) (QueryUnit, error) {
+	queryUnitSlice := strings.Split(queryUnit, " ")
+	fieldName, comparator := queryUnitSlice[0], queryUnitSlice[1]
+	valueIndex, err := strconv.Atoi(queryUnitSlice[2])
+	if err != nil {
+		return QueryUnit{}, err
+	}
+	return QueryUnit{
+		FieldName:  fieldName,
+		Comparator: comparator,
+		ValueIndex: valueIndex,
+	}, nil
 }
 
 func isBigger(first, second any) bool {
 	switch first.(type) {
 	case string:
 		return first.(string) > second.(string)
-	case int64:
-		intVal, err := strconv.ParseInt(second.(string), 0, 64)
-		if err != nil {
-			panic("failed type assertion")
-		}
-		return first.(int64) > intVal
+	case int:
+		return first.(int) > second.(int)
+	case time.Time:
+		fTime := first.(time.Time)
+		sTime := second.(time.Time)
+		return fTime.After(sTime)
 	default:
 		panic("wrong type")
 	}
@@ -297,12 +354,12 @@ func isBiggerOrEqual(first, second any) bool {
 	switch first.(type) {
 	case string:
 		return first.(string) >= second.(string)
-	case int64:
-		intVal, err := strconv.ParseInt(second.(string), 0, 64)
-		if err != nil {
-			panic("failed type assertion")
-		}
-		return first.(int64) >= intVal
+	case int:
+		return first.(int) >= second.(int)
+	case time.Time:
+		fTime := first.(time.Time)
+		sTime := second.(time.Time)
+		return fTime.After(sTime) || fTime.Equal(sTime)
 	default:
 		panic("wrong type")
 	}
@@ -312,12 +369,12 @@ func isLesser(first, second any) bool {
 	switch first.(type) {
 	case string:
 		return first.(string) < second.(string)
-	case int64:
-		intVal, err := strconv.ParseInt(second.(string), 0, 64)
-		if err != nil {
-			panic("failed type assertion")
-		}
-		return first.(int64) < intVal
+	case int:
+		return first.(int) < second.(int)
+	case time.Time:
+		fTime := first.(time.Time)
+		sTime := second.(time.Time)
+		return fTime.Before(sTime)
 	default:
 		panic("wrong type")
 	}
@@ -327,22 +384,72 @@ func isLesserOrEqual(first, second any) bool {
 	switch first.(type) {
 	case string:
 		return first.(string) <= second.(string)
-	case int64:
-		intVal, err := strconv.ParseInt(second.(string), 0, 64)
-		if err != nil {
-			panic("failed type assertion")
-		}
-		return first.(int64) <= intVal
+	//case int64:
+	//	intVal, err := strconv.ParseInt(second.(string), 0, 64)
+	//	if err != nil {
+	//		panic("failed type assertion")
+	//	}
+	//	return first.(int64) <= intVal
+	case int:
+		return first.(int) <= second.(int)
+	case time.Time:
+		fTime := first.(time.Time)
+		sTime := second.(time.Time)
+		return fTime.Before(sTime) || fTime.Equal(sTime)
 	default:
 		panic("wrong type")
 	}
 }
 
-func getDescendingMapKeys(m map[int]bool) []int {
-	keys := make([]int, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
+func getResultOfQueryUnit(template interface{}, queryUnit QueryUnit, value interface{}) bool {
+	// This is a hack
+	if queryUnit.FieldName == "FakeTrue" {
+		return true
 	}
-	sort.Sort(sort.Reverse(sort.IntSlice(keys)))
-	return keys
+	if queryUnit.FieldName == "FakeFalse" {
+		return false
+	}
+
+	fieldValue := getFieldValue(template, queryUnit.FieldName)
+	switch queryUnit.Comparator {
+	case "==":
+		return fieldValue == value
+	case "!=":
+		return fieldValue != value
+	case ">":
+		return isBigger(fieldValue, value)
+	case "<":
+		return isLesser(fieldValue, value)
+	case ">=":
+		return isBiggerOrEqual(fieldValue, value)
+	case "<=":
+		return isLesserOrEqual(fieldValue, value)
+	case "LIKE":
+		return strings.Contains(fieldValue.(string), value.(string))
+	}
+	return false
+}
+
+func replaceWithFakeTrueQuery(query string, start, end int) string {
+	return query[:start] + "FakeTrue == 0" + query[end:]
+}
+
+func replaceWithFakeFalseQuery(query string, start, end int) string {
+	return query[:start] + "FakeFalse == 0" + query[end:]
+}
+
+func getQueryUnitString(query string, lastParsedIndex int) (string, int) {
+	condIndex, _ := findConditionIndexAndLen(query, lastParsedIndex)
+	if condIndex != -1 {
+		return query[lastParsedIndex : condIndex-1], condIndex - 1
+	}
+	return query[lastParsedIndex:], len(query)
+}
+
+func getConditionString(query string, lastParsedIndex int) (string, int) {
+	condIndex, condLength := findConditionIndexAndLen(query, lastParsedIndex)
+	if condIndex != -1 {
+		return query[condIndex : condIndex+condLength], condIndex + condLength
+	}
+	return "", lastParsedIndex
 }
