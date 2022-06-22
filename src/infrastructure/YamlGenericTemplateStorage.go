@@ -108,7 +108,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetByName(ctx context.Context
 //Return:
 //	*[]TemplateType - pointer to array of templates
 //	error - if an error occurs, otherwise nil
-func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, search, orderBy, orderDirection string, page, pageSize int, queryBuilder interfaces.IQueryBuilder) (*[]TemplateType, error) {
+func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, orderBy, orderDirection string, page, pageSize int, queryBuilder interfaces.IQueryBuilder) (*[]TemplateType, error) {
 	var templatesSlice []TemplateType
 	files, err := ioutil.ReadDir(y.TemplatesDirectory)
 	if err != nil {
