@@ -5,6 +5,7 @@ import (
 	"rol/dtos"
 )
 
+//MapDeviceTemplateToDto writes device template fields in the dto
 func MapDeviceTemplateToDto(template domain.DeviceTemplate, dto *dtos.DeviceTemplateDto) {
 	dto.Name = template.Name
 	dto.Model = template.Model

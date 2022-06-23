@@ -12,16 +12,32 @@ import (
 	"strings"
 )
 
+//DeviceTemplateService device template service structure for domain.DeviceTemplate
 type DeviceTemplateService struct {
 	storage interfaces.IGenericTemplateStorage[domain.DeviceTemplate]
 }
 
+//NewDeviceTemplateService constructor for DeviceTemplateService
+//Params
+//	dirName - relative path in /templates directory
+//	log - logrus logger
 func NewDeviceTemplateService(dirName string, log *logrus.Logger) *DeviceTemplateService {
 	return &DeviceTemplateService{
 		storage: infrastructure.NewDeviceTemplateStorage(dirName, log),
 	}
 }
 
+//GetList get list of domain.DeviceTemplate with filtering and pagination
+//Params
+//	ctx - context is used only for logging
+//	search - string for search in entity string fields
+//	orderBy - order by entity field name
+//	orderDirection - ascending or descending order
+//	page - page number
+//	pageSize - page size
+//Return
+//	*dtos.PaginatedListDto[dtos.DeviceTemplateDto] - pointer to paginated list of device templates
+//	error - if an error occurs, otherwise nil
 func (d *DeviceTemplateService) GetList(ctx context.Context, search, orderBy, orderDirection string, page, pageSize int) (*dtos.PaginatedListDto[dtos.DeviceTemplateDto], error) {
 	pageFinal := page
 	pageSizeFinal := pageSize
@@ -58,6 +74,13 @@ func (d *DeviceTemplateService) GetList(ctx context.Context, search, orderBy, or
 	return paginatedDto, nil
 }
 
+//GetByName Get ethernet switch by name
+//Params
+//	ctx - context is used only for logging
+//	name - device template name
+//Return
+//	*dtos.DeviceTemplateDto - point to ethernet switch dto
+//	error - if an error occurs, otherwise nil
 func (d *DeviceTemplateService) GetByName(ctx context.Context, templateName string) (*dtos.DeviceTemplateDto, error) {
 	template, err := d.storage.GetByName(ctx, templateName)
 	if err != nil {

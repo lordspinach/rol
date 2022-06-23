@@ -1,5 +1,6 @@
 package dtos
 
+//DeviceTemplateDto dto structure for domain.DeviceTemplate
 type DeviceTemplateDto struct {
 	//Name template name
 	Name string
@@ -27,6 +28,7 @@ type DeviceTemplateDto struct {
 	USBBootStages []DeviceTemplateBootStageDto
 }
 
+//DeviceTemplateNetworkDto dto structure for domain.DeviceTemplateNetworkInterface
 type DeviceTemplateNetworkDto struct {
 	//Name of network interface. This field is unique within device template network interfaces
 	Name string
@@ -38,6 +40,7 @@ type DeviceTemplateNetworkDto struct {
 	Management bool
 }
 
+//DeviceTemplateControlDto dto structure for domain.DeviceTemplateControlDesc
 type DeviceTemplateControlDto struct {
 	//Emergency how to control device power in case of emergency. As example: POE(For Rpi4), IPMI, ILO or PowerSwitch
 	Emergency string
@@ -48,6 +51,7 @@ type DeviceTemplateControlDto struct {
 	NextBoot string
 }
 
+//DeviceTemplateBootStageFileDto dto structure for domain.BootStageTemplateFile
 type DeviceTemplateBootStageFileDto struct {
 	//ExistingFileName file name is a real full file path with name on the disk.
 	//This path is relative from app directory
@@ -56,6 +60,7 @@ type DeviceTemplateBootStageFileDto struct {
 	VirtualFileName string
 }
 
+//DeviceTemplateBootStageDto dto structure for domain.BootStageTemplate
 type DeviceTemplateBootStageDto struct {
 	//Name of boot stage template
 	Name string

@@ -39,6 +39,10 @@ func Test_DeviceTemplateService_GetList(t *testing.T) {
 	if err != nil {
 		t.Errorf("get list failed: %s", err)
 	}
+	if templates == nil {
+		t.Error("templates are nil")
+		return
+	}
 	if templates.Items == nil {
 		t.Error("templates not found")
 	}

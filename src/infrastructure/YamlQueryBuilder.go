@@ -50,8 +50,7 @@ func (y *YamlQueryBuilder) addQueryBuilder(condition string, builder interfaces.
 	return y
 }
 
-//Where
-//	Add new AND condition to the query
+//Where add new AND condition to the query
 //Params
 // fieldName - name of the field
 // comparator - logical comparison operator
@@ -62,8 +61,7 @@ func (y *YamlQueryBuilder) Where(fieldName, comparator string, value interface{}
 	return y.addQuery("AND", fieldName, comparator, value)
 }
 
-//WhereQuery
-//	Add new complicated AND condition to the query based on another query
+//WhereQuery add new complicated AND condition to the query based on another query
 //Params
 // builder - query builder
 //Return
@@ -72,8 +70,7 @@ func (y *YamlQueryBuilder) WhereQuery(builder interfaces.IQueryBuilder) interfac
 	return y.addQueryBuilder("AND", builder)
 }
 
-//Or
-//	Add new OR condition to the query
+//Or add new OR condition to the query
 //Params
 // fieldName - name of the field
 // comparator - logical comparison operator
@@ -84,8 +81,7 @@ func (y *YamlQueryBuilder) Or(fieldName, comparator string, value interface{}) i
 	return y.addQuery("OR", fieldName, comparator, value)
 }
 
-//OrQuery
-//	Add new complicated OR condition to the query based on another query
+//OrQuery add new complicated OR condition to the query based on another query
 //Params
 // builder - query builder
 //Return
@@ -94,16 +90,16 @@ func (y *YamlQueryBuilder) OrQuery(builder interfaces.IQueryBuilder) interfaces.
 	return y.addQueryBuilder("OR", builder)
 }
 
-//Build
-//	Build a slice of SuiteOfConditions
+//Build a slice of query arguments
 //Return
 // slice of query arguments
 // error - if an error occurred, otherwise nil
 func (y *YamlQueryBuilder) Build() (interface{}, error) {
-	if len(y.QueryString) < 1 {
-		return nil, fmt.Errorf("queryBuilder is empty")
-	}
 	arr := make([]interface{}, 0)
+	if len(y.QueryString) < 1 {
+		return arr, nil
+		//fmt.Errorf("queryBuilder is empty")
+	}
 	arr = append(arr, y.QueryString)
 	arr = append(arr, y.Values...)
 	return arr, nil

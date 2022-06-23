@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -27,6 +28,7 @@ type YamlGenericTemplateStorage[TemplateType domain.DeviceTemplate] struct {
 	logSourceName      string
 }
 
+//QueryUnit represents bracketed expression that is part of query string
 type QueryUnit struct {
 	FieldName  string
 	Comparator string
@@ -78,15 +80,15 @@ func (y *YamlGenericTemplateStorage[TemplateType]) sortTemplatesSlice(templates 
 		case reflect.String:
 			if strings.ToLower(orderDirection) == "desc" || strings.ToLower(orderDirection) == "descending" {
 				return reflect.Indirect(firstReflect).String() > reflect.Indirect(secondReflect).String()
-			} else {
-				return reflect.Indirect(firstReflect).String() < reflect.Indirect(secondReflect).String()
 			}
+			return reflect.Indirect(firstReflect).String() < reflect.Indirect(secondReflect).String()
+
 		case reflect.Int:
 			if strings.ToLower(orderDirection) == "desc" || strings.ToLower(orderDirection) == "descending" {
 				return reflect.Indirect(firstReflect).Int() > reflect.Indirect(secondReflect).Int()
-			} else {
-				return reflect.Indirect(firstReflect).Int() < reflect.Indirect(secondReflect).Int()
 			}
+			return reflect.Indirect(firstReflect).Int() < reflect.Indirect(secondReflect).Int()
+
 		default:
 			return false
 		}
@@ -101,6 +103,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) sortTemplatesSlice(templates 
 //	*TemplateType - pointer to template
 //	error - if an error occurs, otherwise nil
 func (y *YamlGenericTemplateStorage[TemplateType]) GetByName(ctx context.Context, templateName string) (*TemplateType, error) {
+	y.log(ctx, logrus.DebugLevel, fmt.Sprintf("GetByName: name = %s", templateName))
 	return y.getTemplateObjFromYaml(templateName)
 }
 
@@ -117,6 +120,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetByName(ctx context.Context
 //	*[]TemplateType - pointer to array of templates
 //	error - if an error occurs, otherwise nil
 func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, orderBy, orderDirection string, page, pageSize int, queryBuilder interfaces.IQueryBuilder) (*[]TemplateType, error) {
+	y.log(ctx, logrus.DebugLevel, fmt.Sprintf("GetList: IN: orderBy=%s, orderDirection=%s, page=%d, size=%d, queryBuilder=%s", orderBy, orderDirection, page, pageSize, queryBuilder))
 	var templatesSlice []TemplateType
 	offset := (page - 1) * pageSize
 	files, err := ioutil.ReadDir(y.TemplatesDirectory)
@@ -174,6 +178,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) getPaginatedSlice(templates [
 //	int64 - number of entities
 //	error - if an error occurs, otherwise nil
 func (y *YamlGenericTemplateStorage[TemplateType]) Count(ctx context.Context, queryBuilder interfaces.IQueryBuilder) (int64, error) {
+	y.log(ctx, logrus.DebugLevel, fmt.Sprintf("Count: IN: queryBuilder=%+v", queryBuilder))
 	var templatesSlice []TemplateType
 	files, err := ioutil.ReadDir(y.TemplatesDirectory)
 	if err != nil {
@@ -192,7 +197,36 @@ func (y *YamlGenericTemplateStorage[TemplateType]) Count(ctx context.Context, qu
 	}
 	queryArr := queryStr.([]interface{})
 	foundTemplates, err := y.handleQuery(templatesSlice, queryArr...)
-	return int64(len(*foundTemplates)), nil
+	if err != nil {
+		return 0, err
+	}
+	count := int64(len(*foundTemplates))
+	y.log(ctx, logrus.DebugLevel, fmt.Sprintf("Count: OUT: count=%d", count))
+	return count, nil
+}
+
+func (y *YamlGenericTemplateStorage[TemplateType]) log(ctx context.Context, level logrus.Level, message string) {
+	if ctx != nil {
+		actionID := uuid.UUID{}
+		if ctx.Value("requestId") != nil {
+			actionID = ctx.Value("requestId").(uuid.UUID)
+		}
+
+		entry := y.logger.WithFields(logrus.Fields{
+			"actionID": actionID,
+			"source":   y.logSourceName,
+		})
+		switch level {
+		case logrus.ErrorLevel:
+			entry.Error(message)
+		case logrus.InfoLevel:
+			entry.Info(message)
+		case logrus.WarnLevel:
+			entry.Warn(message)
+		case logrus.DebugLevel:
+			entry.Debug(message)
+		}
+	}
 }
 
 //NewQueryBuilder gets new query builder
@@ -201,6 +235,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) Count(ctx context.Context, qu
 //Return
 //	interfaces.IQueryBuilder - new query builder
 func (y *YamlGenericTemplateStorage[TemplateType]) NewQueryBuilder(ctx context.Context) interfaces.IQueryBuilder {
+	y.log(ctx, logrus.DebugLevel, "Call method NewQueryBuilder")
 	return NewYamlQueryBuilder()
 }
 
@@ -384,12 +419,6 @@ func isLesserOrEqual(first, second any) bool {
 	switch first.(type) {
 	case string:
 		return first.(string) <= second.(string)
-	//case int64:
-	//	intVal, err := strconv.ParseInt(second.(string), 0, 64)
-	//	if err != nil {
-	//		panic("failed type assertion")
-	//	}
-	//	return first.(int64) <= intVal
 	case int:
 		return first.(int) <= second.(int)
 	case time.Time:

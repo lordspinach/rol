@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+//GenericYamlStorageTest is a generic structure for testing yaml storage
 type GenericYamlStorageTest[TemplateType domain.DeviceTemplate] struct {
 	Storage        *infrastructure.YamlGenericTemplateStorage[TemplateType]
 	Context        context.Context
@@ -19,6 +20,7 @@ type GenericYamlStorageTest[TemplateType domain.DeviceTemplate] struct {
 	TemplatesCount int
 }
 
+//NewGenericYamlStorageTest constructor for GenericYamlStorageTest
 func NewGenericYamlStorageTest[TemplateType domain.DeviceTemplate](storage *infrastructure.YamlGenericTemplateStorage[TemplateType], dirName string, templatesCount int) *GenericYamlStorageTest[TemplateType] {
 	if templatesCount < 2 {
 		templatesCount = 2
@@ -100,7 +102,7 @@ func createXTemplatesForTest(x int) error {
 	return nil
 }
 
-func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_GetByName(fileName string) error {
+func (g *GenericYamlStorageTest[TemplateType]) GetByNameTest(fileName string) error {
 	nameSlice := strings.Split(fileName, ".")
 	name := nameSlice[0]
 	template, err := g.Storage.GetByName(g.Context, fileName)
@@ -116,7 +118,7 @@ func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_GetByName(file
 	return nil
 }
 
-func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_GetList() error {
+func (g *GenericYamlStorageTest[TemplateType]) GetListTest() error {
 	templatesArr, err := g.Storage.GetList(g.Context, "", "", 1, g.TemplatesCount, nil)
 	if err != nil {
 		return fmt.Errorf("get list failed:  %s", err)
@@ -127,7 +129,7 @@ func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_GetList() erro
 	return nil
 }
 
-func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_Pagination(page, pageSize int) error {
+func (g *GenericYamlStorageTest[TemplateType]) PaginationTest(page, pageSize int) error {
 	templatesArrFirstPage, err := g.Storage.GetList(g.Context, "CPUCount", "asc", page, pageSize, nil)
 	if err != nil {
 		return fmt.Errorf("get list failed: %s", err)
@@ -161,7 +163,7 @@ func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_Pagination(pag
 	return nil
 }
 
-func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_Sort() error {
+func (g *GenericYamlStorageTest[TemplateType]) SortTest() error {
 	templatesArr, err := g.Storage.GetList(g.Context, "CPUCount", "asc", 1, g.TemplatesCount, nil)
 	if err != nil {
 		return fmt.Errorf("get list failed: %s", err)
@@ -178,7 +180,7 @@ func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_Sort() error {
 	return nil
 }
 
-func (g *GenericYamlStorageTest[TemplateType]) GenericYamlStorage_Filter() error {
+func (g *GenericYamlStorageTest[TemplateType]) FilterTest() error {
 	queryBuilder := g.Storage.NewQueryBuilder(g.Context)
 	queryBuilder.
 		Where("CPUCount", ">", g.TemplatesCount/2).
