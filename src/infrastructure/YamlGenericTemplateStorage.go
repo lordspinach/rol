@@ -70,7 +70,10 @@ func (y *YamlGenericTemplateStorage[TemplateType]) getTemplateObjFromYaml(templa
 	return template, nil
 }
 
-func (y *YamlGenericTemplateStorage[TemplateType]) sortTemplatesSlice(templates *[]TemplateType, orderBy, orderDirection string) {
+func (y *YamlGenericTemplateStorage[TemplateType]) sortTemplatesSlice(templates *[]TemplateType, orderBy, orderDirection string) error {
+	if !isFieldExist((*templates)[0], orderBy) && orderBy != "" {
+		return fmt.Errorf("there is no field with name '%s' at template", orderBy)
+	}
 	sort.Slice(*templates, func(i, j int) bool {
 		firstElem := (*templates)[i]
 		secondElem := (*templates)[j]
@@ -93,6 +96,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) sortTemplatesSlice(templates 
 			return false
 		}
 	})
+	return nil
 }
 
 //GetByName gets template by name
@@ -150,7 +154,10 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, 
 		templates = &templatesSlice
 	}
 
-	y.sortTemplatesSlice(templates, orderBy, orderDirection)
+	err = y.sortTemplatesSlice(templates, orderBy, orderDirection)
+	if err != nil {
+		return nil, err
+	}
 	paginatedSlice, err := y.getPaginatedSlice(*templates, offset, pageSize)
 	if err != nil {
 		return nil, err
@@ -253,7 +260,10 @@ func (y *YamlGenericTemplateStorage[TemplateType]) handleQuery(templatesSlice []
 			if startIndex == -1 && endIndex == -1 {
 				break
 			}
-			result, _ := handleSimpleQuery(template, queryForTemplate[startIndex+1:endIndex-1], queryValues)
+			result, err := handleSimpleQuery(template, queryForTemplate[startIndex+1:endIndex-1], queryValues)
+			if err != nil {
+				return nil, err
+			}
 			if result {
 				queryForTemplate = replaceWithFakeTrueQuery(queryForTemplate, startIndex, endIndex)
 			} else {
@@ -261,7 +271,10 @@ func (y *YamlGenericTemplateStorage[TemplateType]) handleQuery(templatesSlice []
 			}
 			startIndex, endIndex = findLowerQueryIndexes(queryForTemplate)
 		}
-		result, _ := handleSimpleQuery(template, queryForTemplate, queryValues)
+		result, err := handleSimpleQuery(template, queryForTemplate, queryValues)
+		if err != nil {
+			return nil, err
+		}
 		if result {
 			*finalSlice = append(*finalSlice, template)
 		}
@@ -281,16 +294,24 @@ func handleSimpleQuery(template interface{}, query string, queryValues []interfa
 		if err != nil {
 			return false, err
 		}
+		if !isFieldExist(template, queryUnit.FieldName) {
+			return false, fmt.Errorf("there is no field with name '%s' at template", queryUnit.FieldName)
+		}
+		if !isValidComparator(queryUnit.Comparator) {
+			return false, fmt.Errorf("invalid comparator: %s", queryUnit.Comparator)
+		}
 		value := queryValues[queryUnit.ValueIndex]
 
+		interimResult, err := getResultOfQueryUnit(template, queryUnit, value)
+		if err != nil {
+			return false, err
+		}
 		if condition == "" {
-			result = getResultOfQueryUnit(template, queryUnit, value)
-		}
-		if condition == "AND" {
-			result = result && getResultOfQueryUnit(template, queryUnit, value)
-		}
-		if condition == "OR" {
-			result = result || getResultOfQueryUnit(template, queryUnit, value)
+			result = interimResult
+		} else if condition == "AND" {
+			result = result && interimResult
+		} else if condition == "OR" {
+			result = result || interimResult
 		}
 		// Get condition if exist for the next iteration
 		condition, lastParsedIndex = getConditionString(query, lastParsedIndex)
@@ -356,6 +377,31 @@ func getFieldValue(template interface{}, fieldName string) interface{} {
 	return fieldValue
 }
 
+func isFieldExist(template interface{}, fieldName string) bool {
+	return reflect.ValueOf(template).FieldByName(fieldName).IsValid()
+}
+
+func isValidComparator(comparator string) bool {
+	switch comparator {
+	case "==":
+		return true
+	case "!=":
+		return true
+	case ">":
+		return true
+	case ">=":
+		return true
+	case "<":
+		return true
+	case "<=":
+		return true
+	case "LIKE":
+		return true
+	default:
+		return false
+	}
+}
+
 func parseQueryUnitString(queryUnit string) (QueryUnit, error) {
 	queryUnitSlice := strings.Split(queryUnit, " ")
 	fieldName, comparator := queryUnitSlice[0], queryUnitSlice[1]
@@ -370,81 +416,81 @@ func parseQueryUnitString(queryUnit string) (QueryUnit, error) {
 	}, nil
 }
 
-func isBigger(first, second any) bool {
+func isBigger(first, second any) (bool, error) {
 	switch first.(type) {
 	case string:
-		return first.(string) > second.(string)
+		return first.(string) > second.(string), nil
 	case int:
-		return first.(int) > second.(int)
+		return first.(int) > second.(int), nil
 	case time.Time:
 		fTime := first.(time.Time)
 		sTime := second.(time.Time)
-		return fTime.After(sTime)
+		return fTime.After(sTime), nil
 	default:
-		panic("wrong type")
+		return false, fmt.Errorf("wrong type")
 	}
 }
 
-func isBiggerOrEqual(first, second any) bool {
+func isBiggerOrEqual(first, second any) (bool, error) {
 	switch first.(type) {
 	case string:
-		return first.(string) >= second.(string)
+		return first.(string) >= second.(string), nil
 	case int:
-		return first.(int) >= second.(int)
+		return first.(int) >= second.(int), nil
 	case time.Time:
 		fTime := first.(time.Time)
 		sTime := second.(time.Time)
-		return fTime.After(sTime) || fTime.Equal(sTime)
+		return fTime.After(sTime) || fTime.Equal(sTime), nil
 	default:
-		panic("wrong type")
+		return false, fmt.Errorf("wrong type")
 	}
 }
 
-func isLesser(first, second any) bool {
+func isLesser(first, second any) (bool, error) {
 	switch first.(type) {
 	case string:
-		return first.(string) < second.(string)
+		return first.(string) < second.(string), nil
 	case int:
-		return first.(int) < second.(int)
+		return first.(int) < second.(int), nil
 	case time.Time:
 		fTime := first.(time.Time)
 		sTime := second.(time.Time)
-		return fTime.Before(sTime)
+		return fTime.Before(sTime), nil
 	default:
-		panic("wrong type")
+		return false, fmt.Errorf("wrong type")
 	}
 }
 
-func isLesserOrEqual(first, second any) bool {
+func isLesserOrEqual(first, second any) (bool, error) {
 	switch first.(type) {
 	case string:
-		return first.(string) <= second.(string)
+		return first.(string) <= second.(string), nil
 	case int:
-		return first.(int) <= second.(int)
+		return first.(int) <= second.(int), nil
 	case time.Time:
 		fTime := first.(time.Time)
 		sTime := second.(time.Time)
-		return fTime.Before(sTime) || fTime.Equal(sTime)
+		return fTime.Before(sTime) || fTime.Equal(sTime), nil
 	default:
-		panic("wrong type")
+		return false, fmt.Errorf("wrong type")
 	}
 }
 
-func getResultOfQueryUnit(template interface{}, queryUnit QueryUnit, value interface{}) bool {
+func getResultOfQueryUnit(template interface{}, queryUnit QueryUnit, value interface{}) (bool, error) {
 	// This is a hack
 	if queryUnit.FieldName == "FakeTrue" {
-		return true
+		return true, nil
 	}
 	if queryUnit.FieldName == "FakeFalse" {
-		return false
+		return false, nil
 	}
 
 	fieldValue := getFieldValue(template, queryUnit.FieldName)
 	switch queryUnit.Comparator {
 	case "==":
-		return fieldValue == value
+		return fieldValue == value, nil
 	case "!=":
-		return fieldValue != value
+		return fieldValue != value, nil
 	case ">":
 		return isBigger(fieldValue, value)
 	case "<":
@@ -454,9 +500,9 @@ func getResultOfQueryUnit(template interface{}, queryUnit QueryUnit, value inter
 	case "<=":
 		return isLesserOrEqual(fieldValue, value)
 	case "LIKE":
-		return strings.Contains(fieldValue.(string), value.(string))
+		return strings.Contains(fieldValue.(string), value.(string)), nil
 	}
-	return false
+	return false, nil
 }
 
 func replaceWithFakeTrueQuery(query string, start, end int) string {
