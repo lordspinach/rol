@@ -308,9 +308,7 @@ func handleSimpleQuery(template interface{}, query string, queryValues []interfa
 		if !isFieldExist(template, queryUnit.FieldName) && queryUnit.FieldName != "FakeFalse" && queryUnit.FieldName != "FakeTrue" {
 			return false, fmt.Errorf("there is no field with name '%s' at template", queryUnit.FieldName)
 		}
-		if !isValidComparator(queryUnit.Comparator) {
-			return false, fmt.Errorf("invalid comparator: %s", queryUnit.Comparator)
-		}
+
 		value := queryValues[queryUnit.ValueIndex]
 
 		interimResult, err := getResultOfQueryUnit(template, queryUnit, value)
@@ -394,27 +392,6 @@ func getFieldValue(template interface{}, fieldName string) (interface{}, error) 
 
 func isFieldExist(template interface{}, fieldName string) bool {
 	return reflect.ValueOf(template).FieldByName(fieldName).IsValid()
-}
-
-func isValidComparator(comparator string) bool {
-	switch comparator {
-	case "==":
-		return true
-	case "!=":
-		return true
-	case ">":
-		return true
-	case ">=":
-		return true
-	case "<":
-		return true
-	case "<=":
-		return true
-	case "LIKE":
-		return true
-	default:
-		return false
-	}
 }
 
 func parseQueryUnitString(queryUnit string) (QueryUnit, error) {
@@ -519,8 +496,9 @@ func getResultOfQueryUnit(template interface{}, queryUnit QueryUnit, value inter
 		return isLesserOrEqual(fieldValue, value)
 	case "LIKE":
 		return strings.Contains(fieldValue.(string), value.(string)), nil
+	default:
+		return false, fmt.Errorf("invalid comparator: %s", queryUnit.Comparator)
 	}
-	return false, nil
 }
 
 func replaceWithFakeTrueQuery(query string, start, end int) string {
