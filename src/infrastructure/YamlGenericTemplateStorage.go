@@ -100,9 +100,9 @@ func (y *YamlGenericTemplateStorage[TemplateType]) sortTemplatesSlice(templates 
 					return fTime.After(sTime)
 				}
 				return fTime.Before(sTime)
-			} else {
-				return false
 			}
+			return false
+
 		default:
 			return false
 		}
@@ -383,6 +383,7 @@ func getFieldValue(template interface{}, fieldName string) (interface{}, error) 
 	case reflect.Struct:
 		if fieldReflect.Type().String() == "time.Time" {
 			fieldValue = valueOfTemplate.FieldByName(fieldName).Interface().(time.Time)
+			break
 		}
 		return nil, fmt.Errorf("wrong field type")
 	default:
