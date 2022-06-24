@@ -368,7 +368,7 @@ func findConditionIndexAndLen(query string, searchStartIndex int) (int, int) {
 	return -1, -1
 }
 
-func getFieldValue(template interface{}, fieldName string) interface{} {
+func getFieldValue(template interface{}, fieldName string) (interface{}, error) {
 	valueOfTemplate := reflect.ValueOf(template)
 	if valueOfTemplate.Kind() == reflect.Ptr {
 		valueOfTemplate = valueOfTemplate.Elem()
@@ -384,8 +384,11 @@ func getFieldValue(template interface{}, fieldName string) interface{} {
 		if fieldReflect.Type().String() == "time.Time" {
 			fieldValue = valueOfTemplate.FieldByName(fieldName).Interface().(time.Time)
 		}
+		return nil, fmt.Errorf("wrong field type")
+	default:
+		return nil, fmt.Errorf("wrong field type")
 	}
-	return fieldValue
+	return fieldValue, nil
 }
 
 func isFieldExist(template interface{}, fieldName string) bool {
@@ -496,7 +499,10 @@ func getResultOfQueryUnit(template interface{}, queryUnit QueryUnit, value inter
 		return false, nil
 	}
 
-	fieldValue := getFieldValue(template, queryUnit.FieldName)
+	fieldValue, err := getFieldValue(template, queryUnit.FieldName)
+	if err != nil {
+		return false, err
+	}
 	switch queryUnit.Comparator {
 	case "==":
 		return fieldValue == value, nil
