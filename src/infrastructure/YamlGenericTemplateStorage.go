@@ -305,7 +305,7 @@ func handleSimpleQuery(template interface{}, query string, queryValues []interfa
 		if err != nil {
 			return false, err
 		}
-		if !isFieldExist(template, queryUnit.FieldName) {
+		if !isFieldExist(template, queryUnit.FieldName) && queryUnit.FieldName != "FakeFalse" && queryUnit.FieldName != "FakeTrue" {
 			return false, fmt.Errorf("there is no field with name '%s' at template", queryUnit.FieldName)
 		}
 		if !isValidComparator(queryUnit.Comparator) {
