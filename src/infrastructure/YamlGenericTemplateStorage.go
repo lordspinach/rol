@@ -92,6 +92,17 @@ func (y *YamlGenericTemplateStorage[TemplateType]) sortTemplatesSlice(templates 
 			}
 			return reflect.Indirect(firstReflect).Int() < reflect.Indirect(secondReflect).Int()
 
+		case reflect.Struct:
+			if firstReflect.Type().String() == "time.Time" {
+				fTime := firstReflect.Interface().(time.Time)
+				sTime := secondReflect.Interface().(time.Time)
+				if strings.ToLower(orderDirection) == "desc" || strings.ToLower(orderDirection) == "descending" {
+					return fTime.After(sTime)
+				}
+				return fTime.Before(sTime)
+			} else {
+				return false
+			}
 		default:
 			return false
 		}
