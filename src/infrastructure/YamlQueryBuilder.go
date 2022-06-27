@@ -98,7 +98,6 @@ func (y *YamlQueryBuilder) Build() (interface{}, error) {
 	arr := make([]interface{}, 0)
 	if len(y.QueryString) < 1 {
 		return arr, nil
-		//fmt.Errorf("queryBuilder is empty")
 	}
 	arr = append(arr, y.QueryString)
 	arr = append(arr, y.Values...)
