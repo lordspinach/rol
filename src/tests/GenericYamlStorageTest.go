@@ -34,7 +34,7 @@ func NewGenericYamlStorageTest[TemplateType domain.DeviceTemplate](storage *infr
 }
 
 func createXTemplatesForTest(x int) error {
-	err := os.Mkdir("../templates/testTemplates", 0777)
+	err := os.MkdirAll("../templates/testTemplates", 0777)
 	if err != nil {
 		return fmt.Errorf("creating dir failed: %s", err)
 	}

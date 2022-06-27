@@ -16,11 +16,14 @@ func Test_DeviceTemplateService_Prepare(t *testing.T) {
 	if err != nil {
 		t.Errorf("creating dir failed: %s", err)
 	}
-	deviceTemplateService = services.NewDeviceTemplateService("testTemplates", nil)
+	deviceTemplateService, err = services.NewDeviceTemplateService("testTemplates", nil)
+	if err != nil {
+		t.Errorf("creating service failed: %s", err.Error())
+	}
 }
 
 func Test_DeviceTemplateService_GetByName(t *testing.T) {
-	template, err := deviceTemplateService.GetByName(nil, "AutoTesting_3.yml")
+	template, err := deviceTemplateService.GetByName(nil, "AutoTesting_3")
 	if err != nil {
 		t.Errorf("get by name failed: %s", err)
 	}

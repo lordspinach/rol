@@ -22,10 +22,14 @@ type DeviceTemplateService struct {
 //Params
 //	dirName - relative path in /templates directory
 //	log - logrus logger
-func NewDeviceTemplateService(dirName string, log *logrus.Logger) *DeviceTemplateService {
-	return &DeviceTemplateService{
-		storage: infrastructure.NewDeviceTemplateStorage(dirName, log),
+func NewDeviceTemplateService(dirName string, log *logrus.Logger) (*DeviceTemplateService, error) {
+	storage, err := infrastructure.NewDeviceTemplateStorage(dirName, log)
+	if err != nil {
+		return nil, fmt.Errorf("device templates service creating error: %s", err.Error())
 	}
+	return &DeviceTemplateService{
+		storage: storage,
+	}, nil
 }
 
 //GetList get list of domain.DeviceTemplate with filtering and pagination

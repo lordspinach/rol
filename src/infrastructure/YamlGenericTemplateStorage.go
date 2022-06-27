@@ -26,6 +26,7 @@ type YamlGenericTemplateStorage[TemplateType domain.DeviceTemplate] struct {
 	TemplatesDirectory string
 	logger             *logrus.Logger
 	logSourceName      string
+	Templates          *[]TemplateType
 }
 
 //QueryUnit represents bracketed expression that is part of query string
@@ -40,17 +41,40 @@ type QueryUnit struct {
 //Params:
 //	dirName - directory name where the templates are located
 //	log - logrus.Logger
-func NewYamlGenericTemplateStorage[TemplateType domain.DeviceTemplate](dirName string, log *logrus.Logger) *YamlGenericTemplateStorage[TemplateType] {
+func NewYamlGenericTemplateStorage[TemplateType domain.DeviceTemplate](dirName string, log *logrus.Logger) (*YamlGenericTemplateStorage[TemplateType], error) {
 	model := new(TemplateType)
 	_, b, _, _ := runtime.Caller(0)
 	rootPath := filepath.Join(filepath.Dir(b), "../templates/")
 
 	templatesDirectory := path.Join(rootPath, dirName)
-	return &YamlGenericTemplateStorage[TemplateType]{
+	storage := &YamlGenericTemplateStorage[TemplateType]{
 		TemplatesDirectory: templatesDirectory,
 		logger:             log,
 		logSourceName:      fmt.Sprintf("YamlGenericTemplateStorage<%s>", reflect.TypeOf(*model).Name()),
+		Templates:          &[]TemplateType{},
 	}
+	err := storage.reloadFromFiles()
+	if err != nil {
+		return nil, fmt.Errorf("load from files error: %s", err.Error())
+	}
+	return storage, nil
+}
+
+func (y *YamlGenericTemplateStorage[TemplateType]) reloadFromFiles() error {
+	y.Templates = &[]TemplateType{}
+
+	files, err := ioutil.ReadDir(y.TemplatesDirectory)
+	if err != nil {
+		return fmt.Errorf("reading dir error: %s", err.Error())
+	}
+	for _, f := range files {
+		template, err := y.getTemplateObjFromYaml(f.Name())
+		if err != nil {
+			return fmt.Errorf("yaml parsing error: %s", err.Error())
+		}
+		*y.Templates = append(*y.Templates, *template)
+	}
+	return nil
 }
 
 func (y *YamlGenericTemplateStorage[TemplateType]) getTemplateObjFromYaml(templateName string) (*TemplateType, error) {
@@ -119,7 +143,18 @@ func (y *YamlGenericTemplateStorage[TemplateType]) sortTemplatesSlice(templates 
 //	error - if an error occurs, otherwise nil
 func (y *YamlGenericTemplateStorage[TemplateType]) GetByName(ctx context.Context, templateName string) (*TemplateType, error) {
 	y.log(ctx, logrus.DebugLevel, fmt.Sprintf("GetByName: name = %s", templateName))
-	return y.getTemplateObjFromYaml(templateName)
+	queryBuilder := NewYamlQueryBuilder()
+	queryBuilder.Where("Name", "==", templateName)
+	query, err := queryBuilder.Build()
+	if err != nil {
+		return nil, fmt.Errorf("build query error: %s", err.Error())
+	}
+	queryArr := query.([]interface{})
+	templates, err := y.handleQuery(*y.Templates, queryArr...)
+	if len(*templates) == 1 {
+		return &(*templates)[0], nil
+	}
+	return nil, nil
 }
 
 //GetList gets list of templates with filtering and pagination
@@ -136,33 +171,26 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetByName(ctx context.Context
 //	error - if an error occurs, otherwise nil
 func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, orderBy, orderDirection string, page, pageSize int, queryBuilder interfaces.IQueryBuilder) (*[]TemplateType, error) {
 	y.log(ctx, logrus.DebugLevel, fmt.Sprintf("GetList: IN: orderBy=%s, orderDirection=%s, page=%d, size=%d, queryBuilder=%s", orderBy, orderDirection, page, pageSize, queryBuilder))
-	var templatesSlice []TemplateType
+	var (
+		templates *[]TemplateType
+		queryArr  []interface{}
+		err       error
+	)
 	offset := (page - 1) * pageSize
-	files, err := ioutil.ReadDir(y.TemplatesDirectory)
-	if err != nil {
-		return nil, fmt.Errorf("get templates files error: %s", err.Error())
-	}
-	for _, f := range files {
-		template, err := y.getTemplateObjFromYaml(f.Name())
-		if err != nil {
-			return nil, fmt.Errorf("convert yaml to struct error: %s", err.Error())
-		}
-		templatesSlice = append(templatesSlice, *template)
-	}
-
-	var templates *[]TemplateType
 	if queryBuilder != nil {
-		queryStr, err := queryBuilder.Build()
+		query, err := queryBuilder.Build()
 		if err != nil {
 			return nil, fmt.Errorf("build query error: %s", err.Error())
 		}
-		queryArr := queryStr.([]interface{})
-		templates, err = y.handleQuery(templatesSlice, queryArr...)
+		queryArr = query.([]interface{})
+	}
+	if len(queryArr) > 1 {
+		templates, err = y.handleQuery(*y.Templates, queryArr...)
 		if err != nil {
 			return nil, fmt.Errorf("handle query error: %s", err.Error())
 		}
 	} else {
-		templates = &templatesSlice
+		templates = y.Templates
 	}
 
 	err = y.sortTemplatesSlice(templates, orderBy, orderDirection)
