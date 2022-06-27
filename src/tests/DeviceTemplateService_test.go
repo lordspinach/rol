@@ -7,10 +7,8 @@ import (
 )
 
 var (
-	deviceTemplateService   *services.DeviceTemplateService
-	templatesServiceDirName = "testTemplates"
-	rootTemplatesDirName    = "tests/testTemplates"
-	templatesCount          = 5
+	deviceTemplateService *services.DeviceTemplateService
+	templatesCount        = 5
 )
 
 func Test_DeviceTemplateService_Prepare(t *testing.T) {
@@ -18,7 +16,7 @@ func Test_DeviceTemplateService_Prepare(t *testing.T) {
 	if err != nil {
 		t.Errorf("creating dir failed: %s", err)
 	}
-	deviceTemplateService = services.NewDeviceTemplateService(rootTemplatesDirName, nil)
+	deviceTemplateService = services.NewDeviceTemplateService("testTemplates", nil)
 }
 
 func Test_DeviceTemplateService_GetByName(t *testing.T) {
@@ -65,7 +63,7 @@ func Test_DeviceTemplateService_Search(t *testing.T) {
 }
 
 func Test_DeviceTemplateService_RemoveFiles(t *testing.T) {
-	err := os.RemoveAll(templatesServiceDirName)
+	err := os.RemoveAll("../templates/testTemplates")
 	if err != nil {
 		t.Errorf("deleting dir failed: %s", err)
 	}

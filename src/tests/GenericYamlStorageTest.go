@@ -34,7 +34,7 @@ func NewGenericYamlStorageTest[TemplateType domain.DeviceTemplate](storage *infr
 }
 
 func createXTemplatesForTest(x int) error {
-	err := os.Mkdir("testTemplates", 0777)
+	err := os.Mkdir("../templates/testTemplates", 0777)
 	if err != nil {
 		return fmt.Errorf("creating dir failed: %s", err)
 	}
@@ -93,7 +93,7 @@ func createXTemplatesForTest(x int) error {
 		if err != nil {
 			return fmt.Errorf("yaml marshal failed: %s", err)
 		}
-		fileName := fmt.Sprintf("%s/AutoTesting_%d.yml", "testTemplates", i)
+		fileName := fmt.Sprintf("../templates/testTemplates/AutoTesting_%d.yml", i)
 		err = ioutil.WriteFile(fileName, yamlData, 0777)
 		if err != nil {
 			return fmt.Errorf("create yaml file failed: %s", err)

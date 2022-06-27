@@ -12,7 +12,7 @@ import (
 var testerTemplateStorage *GenericYamlStorageTest[domain.DeviceTemplate]
 
 func Test_DeviceTemplateStorage_Prepare(t *testing.T) {
-	dirName := "tests/testTemplates"
+	dirName := "testTemplates"
 	storage := infrastructure.NewYamlGenericTemplateStorage(dirName, logrus.New())
 	testerTemplateStorage = NewGenericYamlStorageTest[domain.DeviceTemplate](storage, dirName, 30)
 	err := createXTemplatesForTest(testerTemplateStorage.TemplatesCount)
@@ -63,7 +63,7 @@ func Test_DeviceTemplateStorage_Filter(t *testing.T) {
 }
 
 func Test_DeviceTemplateStorage_DeleteTemplates(t *testing.T) {
-	err := os.RemoveAll("testTemplates")
+	err := os.RemoveAll("../templates/testTemplates")
 	if err != nil {
 		t.Errorf("deleting dir failed: %s", err)
 	}
