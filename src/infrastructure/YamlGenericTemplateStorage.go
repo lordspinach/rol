@@ -147,10 +147,13 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetByName(ctx context.Context
 	queryBuilder.Where("Name", "==", templateName)
 	query, err := queryBuilder.Build()
 	if err != nil {
-		return nil, fmt.Errorf("build query error: %s", err.Error())
+		return nil, fmt.Errorf("query building error: %s", err.Error())
 	}
 	queryArr := query.([]interface{})
 	templates, err := y.handleQuery(*y.Templates, queryArr...)
+	if err != nil {
+		return nil, fmt.Errorf("query handling error: %s", err.Error())
+	}
 	if len(*templates) == 1 {
 		return &(*templates)[0], nil
 	}
@@ -180,14 +183,14 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, 
 	if queryBuilder != nil {
 		query, err := queryBuilder.Build()
 		if err != nil {
-			return nil, fmt.Errorf("build query error: %s", err.Error())
+			return nil, fmt.Errorf("query building error: %s", err.Error())
 		}
 		queryArr = query.([]interface{})
 	}
 	if len(queryArr) > 1 {
 		templates, err = y.handleQuery(*y.Templates, queryArr...)
 		if err != nil {
-			return nil, fmt.Errorf("handle query error: %s", err.Error())
+			return nil, fmt.Errorf("query handling error: %s", err.Error())
 		}
 	} else {
 		templates = y.Templates
@@ -233,18 +236,18 @@ func (y *YamlGenericTemplateStorage[TemplateType]) Count(ctx context.Context, qu
 	for _, f := range files {
 		template, err := y.getTemplateObjFromYaml(f.Name())
 		if err != nil {
-			return 0, fmt.Errorf("convert yaml to struct error: %s", err.Error())
+			return 0, fmt.Errorf("error converting yaml to struct : %s", err.Error())
 		}
 		templatesSlice = append(templatesSlice, *template)
 	}
 	queryStr, err := queryBuilder.Build()
 	if err != nil {
-		return 0, fmt.Errorf("build query error: %s", err.Error())
+		return 0, fmt.Errorf("query building error: %s", err.Error())
 	}
 	queryArr := queryStr.([]interface{})
 	foundTemplates, err := y.handleQuery(templatesSlice, queryArr...)
 	if err != nil {
-		return 0, fmt.Errorf("handle query error: %s", err.Error())
+		return 0, fmt.Errorf("query handling error: %s", err.Error())
 	}
 	count := int64(len(*foundTemplates))
 	y.log(ctx, logrus.DebugLevel, fmt.Sprintf("Count: OUT: count=%d", count))
@@ -301,7 +304,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) handleQuery(templatesSlice []
 			}
 			result, err := handleSimpleQuery(template, queryForTemplate[startIndex+1:endIndex-1], queryValues)
 			if err != nil {
-				return nil, fmt.Errorf("handle simple query error: %s", err.Error())
+				return nil, fmt.Errorf("simple query handling error: %s", err.Error())
 			}
 			if result {
 				queryForTemplate = replaceWithFakeTrueQuery(queryForTemplate, startIndex, endIndex)
@@ -312,7 +315,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) handleQuery(templatesSlice []
 		}
 		result, err := handleSimpleQuery(template, queryForTemplate, queryValues)
 		if err != nil {
-			return nil, fmt.Errorf("handle simple query error: %s", err.Error())
+			return nil, fmt.Errorf("simple query handling error: %s", err.Error())
 		}
 		if result {
 			*finalSlice = append(*finalSlice, template)
@@ -427,7 +430,7 @@ func parseQueryUnitString(queryUnit string) (QueryUnit, error) {
 	fieldName, comparator := queryUnitSlice[0], queryUnitSlice[1]
 	valueIndex, err := strconv.Atoi(queryUnitSlice[2])
 	if err != nil {
-		return QueryUnit{}, fmt.Errorf("query unit parse error: %s", err.Error())
+		return QueryUnit{}, fmt.Errorf("error parsing query unit: %s", err.Error())
 	}
 	return QueryUnit{
 		FieldName:  fieldName,

@@ -13,15 +13,16 @@ var testerTemplateStorage *GenericYamlStorageTest[domain.DeviceTemplate]
 
 func Test_DeviceTemplateStorage_Prepare(t *testing.T) {
 	dirName := "testTemplates"
+	templatesCount := 30
+	err := createXTemplatesForTest(templatesCount)
+	if err != nil {
+		t.Errorf("creating templates failed: %s", err)
+	}
 	storage, err := infrastructure.NewYamlGenericTemplateStorage(dirName, logrus.New())
 	if err != nil {
 		t.Errorf("creating templates storage failed: %s", err.Error())
 	}
-	testerTemplateStorage = NewGenericYamlStorageTest[domain.DeviceTemplate](storage, dirName, 30)
-	err = createXTemplatesForTest(testerTemplateStorage.TemplatesCount)
-	if err != nil {
-		t.Errorf("creating templates failed: %s", err)
-	}
+	testerTemplateStorage = NewGenericYamlStorageTest[domain.DeviceTemplate](storage, dirName, templatesCount)
 }
 
 func Test_DeviceTemplateStorage_GetByName(t *testing.T) {
