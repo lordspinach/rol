@@ -65,7 +65,7 @@ func (y *YamlGenericTemplateStorage[TemplateType]) getTemplateObjFromYaml(templa
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(template)
 	if err != nil {
-		return nil, fmt.Errorf("yaml deconding error: %s", err.Error())
+		return nil, fmt.Errorf("yaml decoding error: %s", err.Error())
 	}
 	return template, nil
 }
