@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"rol/app/interfaces"
@@ -106,7 +105,7 @@ func (g *GormQueryBuilder) OrQuery(builder interfaces.IQueryBuilder) interfaces.
 //	error - if error occurs return error, otherwise nil
 func (g *GormQueryBuilder) Build() (interface{}, error) {
 	if len(g.QueryString) < 1 {
-		return nil, errors.New("queryBuilder is empty")
+		return nil, fmt.Errorf("queryBuilder is empty")
 	}
 	arr := make([]interface{}, 0)
 	arr = append(arr, g.QueryString)

@@ -37,7 +37,7 @@ var insertAppFunc = func(entry *logrus.Entry, repository interfaces.IGenericRepo
 	if entry.Data["method"] == nil && !fromLogController(entry) {
 		ent := newEntityFromApp(entry)
 		_, err := repository.Insert(nil, *ent)
-		return err
+		return fmt.Errorf("entity creation error: %s", err.Error())
 	}
 	return nil
 }
@@ -46,7 +46,7 @@ var asyncAppInsertFunc = func(entry *logrus.Entry, repository interfaces.IGeneri
 	if entry.Data["method"] != nil {
 		ent := newEntityFromApp(entry)
 		_, err := repository.Insert(nil, *ent)
-		return err
+		return fmt.Errorf("entity creation error: %s", err.Error())
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"rol/app/interfaces"
 	"rol/domain"
 	"rol/dtos"
@@ -28,7 +29,10 @@ func NewAppLogService(rep interfaces.IGenericRepository[domain.AppLog], log *log
 	dtos.AppLogDto,
 	domain.AppLog], error) {
 	genericService, err := NewGenericService[dtos.AppLogDto, dtos.AppLogDto, dtos.AppLogDto](rep, log)
+	if err != nil {
+		return nil, fmt.Errorf("error receiving a new log service: %s", err.Error())
+	}
 	return &AppLogService{
 		genericService,
-	}, err
+	}, nil
 }

@@ -53,7 +53,7 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 	var err error
 	g.InsertedID, err = g.Service.Create(g.Context, dto)
 	if err != nil {
-		return fmt.Errorf("create failed: %s", err)
+		return fmt.Errorf("entity creation error: %s", err)
 	}
 	return nil
 }
@@ -62,7 +62,7 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GenericServiceGetByID(id uuid.UUID) error {
 	dto, err := g.Service.GetByID(g.Context, id)
 	if err != nil {
-		return fmt.Errorf("get by id failed: %s", err)
+		return fmt.Errorf("failed to retrieve an entity by ID: %s", err)
 	}
 	if dto == nil {
 		return fmt.Errorf("no entity with such id")
@@ -71,7 +71,7 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 
 	obtainedID, err := getUUIDFromReflectArray(value)
 	if err != nil {
-		return fmt.Errorf("convert bytes to uuid failed: %s", err)
+		return fmt.Errorf("error getting uuid from reflection: %s", err)
 	}
 	if obtainedID != id {
 		return fmt.Errorf("unexpected entity ID %d, expect %d", obtainedID, id)
@@ -83,11 +83,11 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GenericServiceUpdate(dto UpdateDtoType, id uuid.UUID) error {
 	err := g.Service.Update(g.Context, dto, id)
 	if err != nil {
-		return fmt.Errorf("get by id failed: %s", err)
+		return fmt.Errorf("entity update error: %s", err)
 	}
 	obtainedDto, err := g.Service.GetByID(g.Context, id)
 	if err != nil {
-		return fmt.Errorf("get by id failed: %s", err)
+		return fmt.Errorf("failed to retrieve an entity by ID: %s", err)
 	}
 	expectedName := reflect.ValueOf(dto).FieldByName("Name").String()
 	obtainedName := reflect.ValueOf(*obtainedDto).FieldByName("Name").String()
@@ -102,11 +102,11 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GenericServiceDelete(id uuid.UUID) error {
 	err := g.Service.Delete(g.Context, id)
 	if err != nil {
-		return fmt.Errorf("delete failed: %s", err)
+		return fmt.Errorf("entity deletion error: %s", err)
 	}
 	dto, err := g.Service.GetByID(g.Context, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to retrieve an entity by ID: %s", err)
 	}
 	if dto != nil {
 		return fmt.Errorf("unexpected entity %v, expect nil", dto)
@@ -118,23 +118,23 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GenericServiceGetList(total int64, page, size int) error {
 	data, err := g.Service.GetList(g.Context, "", "CreatedAt", "desc", page, size)
 	if err != nil {
-		return fmt.Errorf("get list failed: %s", err)
+		return fmt.Errorf("failed to get list: %s", err)
 	}
 	if data.Total != total {
-		return fmt.Errorf("get list failed: total items %d, expect %d", data.Total, total)
+		return fmt.Errorf("failed to get list: total items %d, expect %d", data.Total, total)
 	}
 	if data.Page != page {
-		return fmt.Errorf("get list failed: page %d, expect %d", data.Page, page)
+		return fmt.Errorf("failed to get list: page %d, expect %d", data.Page, page)
 	}
 	if data.Size != size {
-		return fmt.Errorf("get list failed: size %d, expect %d", data.Size, size)
+		return fmt.Errorf("failed to get list: size %d, expect %d", data.Size, size)
 	}
 
 	item := (*data.Items)[0]
 	itemName := reflect.ValueOf(item).FieldByName("Name").String()
 	expectedName := fmt.Sprintf("AutoTesting_%d", total)
 	if itemName != expectedName {
-		return fmt.Errorf("get list sort failed: get %s, expect AutoTesting_%d", itemName, total)
+		return fmt.Errorf("error in obtaining a sorted sheet: get %s, expect AutoTesting_%d", itemName, total)
 	}
 	return nil
 }
@@ -143,7 +143,7 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GenericServiceSearch(search string) error {
 	data, err := g.Service.GetList(g.Context, search, "", "", 1, 10)
 	if err != nil {
-		return fmt.Errorf("get list failed: %s", err)
+		return fmt.Errorf("failed to get list: %s", err)
 	}
 	if len(*data.Items) < 1 {
 		return errors.New("wasn't found any entries")
@@ -159,10 +159,10 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 //GenericServiceCloseConnectionAndRemoveDb close connection and remove db
 func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GenericServiceCloseConnectionAndRemoveDb() error {
 	if err := g.Repository.CloseDb(); err != nil {
-		return fmt.Errorf("close db failed:  %s", err)
+		return fmt.Errorf("DB closing error:  %s", err)
 	}
 	if err := os.Remove(g.DbName); err != nil {
-		return fmt.Errorf("remove db failed:  %s", err)
+		return fmt.Errorf("DB deletion error:  %s", err)
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"rol/app/interfaces"
 	"rol/domain"
 	"rol/dtos"
@@ -29,7 +30,10 @@ func NewHTTPLogService(rep interfaces.IGenericRepository[domain.HTTPLog], log *l
 	dtos.HTTPLogDto,
 	domain.HTTPLog], error) {
 	genericSerice, err := NewGenericService[dtos.HTTPLogDto, dtos.HTTPLogDto, dtos.HTTPLogDto](rep, log)
+	if err != nil {
+		return nil, fmt.Errorf("error receiving a new http log service: %s", err.Error())
+	}
 	return HTTPLogService{
 		genericSerice,
-	}, err
+	}, nil
 }

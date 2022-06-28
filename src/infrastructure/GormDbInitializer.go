@@ -32,7 +32,7 @@ func NewGormEntityDb(cfg *domain.AppConfig) (*gorm.DB, error) {
 	connectionString := fmt.Sprintf("%s:%s@%s(%s:%s)/", entityCfg.Username, entityCfg.Password, entityCfg.Protocol, entityCfg.Hostname, entityCfg.Port)
 	err := createDbIfNotExists(connectionString, entityCfg.DbName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating DB: %s", err.Error())
 	}
 	dialector := mysql.Open(fmt.Sprintf("%s%s%s", connectionString, entityCfg.DbName, entityCfg.Parameters))
 	db, err := gorm.Open(dialector, &gorm.Config{
@@ -63,7 +63,7 @@ func NewGormLogDb(cfg *domain.AppConfig) (*GormFxShell, error) {
 	connectionString := fmt.Sprintf("%s:%s@%s(%s:%s)/", logCfg.Username, logCfg.Password, logCfg.Protocol, logCfg.Hostname, logCfg.Port)
 	err := createDbIfNotExists(connectionString, logCfg.DbName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating DB: %s", err.Error())
 	}
 	dialector := mysql.Open(fmt.Sprintf("%s%s%s", connectionString, logCfg.DbName, logCfg.Parameters))
 	db, err := gorm.Open(dialector, &gorm.Config{
@@ -86,11 +86,11 @@ func createDbIfNotExists(connectionString, dbName string) error {
 	dialector := mysql.Open(connectionString)
 	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
-		return err
+		return fmt.Errorf("database session initialization error: %s", err.Error())
 	}
 	err = db.Exec("CREATE DATABASE IF NOT EXISTS " + dbName).Error
 	if err != nil {
-		return err
+		return fmt.Errorf("error when executing raw sql: %s", err.Error())
 	}
 	return nil
 }

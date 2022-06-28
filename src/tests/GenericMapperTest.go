@@ -19,7 +19,7 @@ func NewGenericMapperToEntity[Dto interface{}, Entity interfaces.IEntityModel]()
 func (g *GenericMapperTest[Dto, Entity]) MapToEntity(dto Dto, entity *Entity) error {
 	err := mappers.MapDtoToEntity(dto, entity)
 	if err != nil {
-		return err
+		return fmt.Errorf("mapping error between an entity and a DTO: %s", err.Error())
 	}
 	return nil
 }
@@ -28,7 +28,7 @@ func (g *GenericMapperTest[Dto, Entity]) MapToEntity(dto Dto, entity *Entity) er
 func (g *GenericMapperTest[Dto, Entity]) MapToDto(entity Entity, dto *Dto) error {
 	err := mappers.MapEntityToDto(entity, dto)
 	if err != nil {
-		return err
+		return fmt.Errorf("mapping error between an entity and a DTO: %s", err.Error())
 	}
 	return nil
 }
@@ -44,7 +44,7 @@ func compareDtoAndEntity(from interface{}, to interface{}) error {
 
 		if reflectValue.Kind() == reflect.Struct && reflectField.Tag != "gorm:\"index\"" {
 			if err := compareDtoAndEntity(reflectValue.Interface(), to); err != nil {
-				return err
+				return fmt.Errorf("error comparing the entity and the DTO: %s", err.Error())
 			}
 		} else {
 			if !reflectValue.IsValid() {
@@ -72,7 +72,7 @@ func compareDtoAndEntity(from interface{}, to interface{}) error {
 			}
 
 			if !reflect.DeepEqual(fromFieldValue, toFieldValue) {
-				return fmt.Errorf("%s field not the same", reflectField.Name)
+				return fmt.Errorf("'%s' field not the same", reflectField.Name)
 			}
 		}
 	}

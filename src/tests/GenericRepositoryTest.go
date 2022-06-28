@@ -2,7 +2,6 @@ package tests
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -35,7 +34,7 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryInsert(entity Entit
 	var err error
 	g.InsertedID, err = g.Repository.Insert(g.Context, entity)
 	if err != nil {
-		return fmt.Errorf("insert failed: %s", err)
+		return fmt.Errorf("insert failed: %s", err.Error())
 	}
 	return nil
 }
@@ -44,14 +43,14 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryInsert(entity Entit
 func (g *GenericRepositoryTest[EntityType]) GenericRepositoryGetByID(id uuid.UUID) error {
 	entity, err := g.Repository.GetByID(g.Context, id)
 	if err != nil {
-		return fmt.Errorf("get by id failed: %s", err)
+		return fmt.Errorf("get by id failed: %s", err.Error())
 	}
 
 	value := reflect.ValueOf(*entity).FieldByName("ID")
 
 	obtainedID, err := getUUIDFromReflectArray(value)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting uuid from reflection: %s", err.Error())
 	}
 	if obtainedID != id {
 		return fmt.Errorf("unexpected id %d, expect %d", obtainedID, id)
@@ -64,11 +63,11 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryUpdate(entity Entit
 	err := g.Repository.Update(g.Context, &entity)
 
 	if err != nil {
-		return fmt.Errorf("update failed:  %s", err)
+		return fmt.Errorf("update failed:  %s", err.Error())
 	}
 	updatedEntity, err := g.Repository.GetByID(g.Context, g.InsertedID)
 	if err != nil {
-		return fmt.Errorf("get by id failed:  %s", err)
+		return fmt.Errorf("get by id failed:  %s", err.Error())
 	}
 	expectedName := reflect.ValueOf(entity).FieldByName("Name").String()
 	obtainedName := reflect.ValueOf(*updatedEntity).FieldByName("Name").String()
@@ -82,7 +81,7 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryUpdate(entity Entit
 func (g *GenericRepositoryTest[EntityType]) GenericRepositoryGetList() error {
 	entityArr, err := g.Repository.GetList(g.Context, "", "", 1, 10, nil)
 	if err != nil {
-		return fmt.Errorf("get list failed:  %s", err)
+		return fmt.Errorf("failed to get list: %s", err.Error())
 	}
 	if len(*entityArr) != 1 {
 		return fmt.Errorf("array length %d, expect 1", len(*entityArr))
@@ -94,7 +93,7 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryGetList() error {
 func (g *GenericRepositoryTest[EntityType]) GenericRepositoryDelete(id uuid.UUID) error {
 	err := g.Repository.Delete(g.Context, id)
 	if err != nil {
-		return fmt.Errorf("delete failed:  %s", err)
+		return fmt.Errorf("entity deletion error: %s", err.Error())
 	}
 	return nil
 }
@@ -103,14 +102,14 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryDelete(id uuid.UUID
 func (g *GenericRepositoryTest[EntityType]) GenericRepositoryPagination(page, size int) error {
 	entityArrFirstPage, err := g.Repository.GetList(g.Context, "created_at", "asc", page, size, nil)
 	if err != nil {
-		return fmt.Errorf("get list failed: %s", err)
+		return fmt.Errorf("failed to get list: %s", err.Error())
 	}
 	if len(*entityArrFirstPage) != size {
 		return fmt.Errorf("array length on %d page %d, expect %d", page, len(*entityArrFirstPage), size)
 	}
 	entityArrSecondPage, err := g.Repository.GetList(g.Context, "created_at", "asc", page+1, size, nil)
 	if err != nil {
-		return fmt.Errorf("get list failed: %s", err)
+		return fmt.Errorf("failed to get list: %s", err.Error())
 	}
 	if len(*entityArrSecondPage) != size {
 		return fmt.Errorf("array length on next page %d, expect %d", len(*entityArrSecondPage), size)
@@ -118,12 +117,12 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryPagination(page, si
 	firstPageValue := reflect.ValueOf(*entityArrFirstPage).Index(0).FieldByName("ID")
 	firstPageID, err := getUUIDFromReflectArray(firstPageValue)
 	if err != nil {
-		return fmt.Errorf("convert reflect array to uuid failed: %s", err)
+		return fmt.Errorf("error getting uuid from reflection: %s", err.Error())
 	}
 	secondPageValue := reflect.ValueOf(*entityArrSecondPage).Index(0).FieldByName("ID")
 	secondPageID, err := getUUIDFromReflectArray(secondPageValue)
 	if err != nil {
-		return fmt.Errorf("convert reflect array to uuid failed: %s", err)
+		return fmt.Errorf("error getting uuid from reflection: %s", err.Error())
 	}
 	if firstPageID == secondPageID {
 		return fmt.Errorf("pagination failed: got same element on second page with ID: %d", firstPageID)
@@ -135,7 +134,7 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryPagination(page, si
 func (g *GenericRepositoryTest[EntityType]) GenericRepositorySort() error {
 	entityArr, err := g.Repository.GetList(g.Context, "created_at", "desc", 1, 10, nil)
 	if err != nil {
-		return fmt.Errorf("get list failed: %s", err)
+		return fmt.Errorf("failed to get list: %s", err.Error())
 	}
 	if len(*entityArr) != 10 {
 		return fmt.Errorf("array length %d, expect 10", len(*entityArr))
@@ -144,7 +143,7 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositorySort() error {
 	name := reflect.ValueOf(*entityArr).Index(index).FieldByName("Name").String()
 
 	if name != fmt.Sprintf("AutoTesting_%d", index) {
-		return fmt.Errorf("sort failed: got %s name, expect AutoTesting_%d", name, index)
+		return fmt.Errorf("sorting failed: got %s name, expect AutoTesting_%d", name, index)
 	}
 	return nil
 }
@@ -153,7 +152,7 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositorySort() error {
 func (g *GenericRepositoryTest[EntityType]) GenericRepositoryFilter(queryBuilder interfaces.IQueryBuilder) error {
 	entityArr, err := g.Repository.GetList(g.Context, "", "", 1, 10, queryBuilder)
 	if err != nil {
-		return fmt.Errorf("get list failed: %s", err)
+		return fmt.Errorf("failed to get list: %s", err.Error())
 	}
 	if len(*entityArr) != 1 {
 		return fmt.Errorf("array length %d, expect 1", len(*entityArr))
@@ -164,10 +163,10 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryFilter(queryBuilder
 //GenericRepositoryCloseConnectionAndRemoveDb close connection and remove db
 func (g *GenericRepositoryTest[EntityType]) GenericRepositoryCloseConnectionAndRemoveDb() error {
 	if err := g.Repository.CloseDb(); err != nil {
-		return fmt.Errorf("close db failed:  %s", err)
+		return fmt.Errorf("DB closing error: %s", err.Error())
 	}
 	if err := os.Remove(g.DbName); err != nil {
-		return fmt.Errorf("remove db failed:  %s", err)
+		return fmt.Errorf("DB deletion error: %s", err.Error())
 	}
 	return nil
 }
@@ -187,9 +186,9 @@ func getUUIDFromReflectArray(value reflect.Value) (uuid.UUID, error) {
 		// create uuid from bytes array we created before
 		id, err := uuid.FromBytes(bytes)
 		if err != nil {
-			return [16]byte{}, err
+			return [16]byte{}, fmt.Errorf("value is not a type of array: %s", err.Error())
 		}
 		return id, nil
 	}
-	return [16]byte{}, errors.New("value is not a type of array")
+	return [16]byte{}, fmt.Errorf("value is not a type of array")
 }

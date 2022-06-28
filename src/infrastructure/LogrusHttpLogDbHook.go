@@ -42,7 +42,7 @@ var httpInsertFunc = func(entry *logrus.Entry, repository interfaces.IGenericRep
 	if entry.Data["method"] != nil && !fromLogController(entry) {
 		ent := newEntityFromHTTP(entry)
 		_, err := repository.Insert(nil, *ent)
-		return err
+		return fmt.Errorf("entity creation error: %s", err.Error())
 	}
 	return nil
 }
@@ -51,7 +51,7 @@ var asyncHTTPInsertFunc = func(entry *logrus.Entry, repository interfaces.IGener
 	if entry.Data["method"] != nil {
 		ent := newEntityFromHTTP(entry)
 		_, err := repository.Insert(nil, *ent)
-		return err
+		return fmt.Errorf("entity creation error: %s", err.Error())
 	}
 	return nil
 }

@@ -119,11 +119,11 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GetL
 	}
 	entities, err := g.repository.GetList(ctx, orderBy, orderDirection, pageFinal, pageSizeFinal, searchQueryBuilder)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get list: %s", err.Error())
 	}
 	count, err := g.repository.Count(ctx, searchQueryBuilder)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("counting error: %s", err.Error())
 	}
 	dtoArr := new([]DtoType)
 	for i := 0; i < len(*entities); i++ {
@@ -149,7 +149,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) getB
 	queryBuilder.Where("id", "=", id)
 	entities, err := g.repository.GetList(ctx, "id", "DESC", 1, 1, queryBuilder)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get list: %s", err.Error())
 	}
 	if len(*entities) == 0 {
 		return nil, nil
@@ -168,7 +168,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) getB
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GetByID(ctx context.Context, id uuid.UUID) (*DtoType, error) {
 	entity, err := g.getByIDExcludeDeleted(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve by IDs not deleted: %s", err.Error())
 	}
 	if entity == nil {
 		return nil, nil
@@ -191,11 +191,10 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GetB
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Update(ctx context.Context, updateDto UpdateDtoType, id uuid.UUID) error {
 	entity, err := g.getByIDExcludeDeleted(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to retrieve by IDs not deleted: %s", err.Error())
 	}
 	if entity == nil {
-		err := fmt.Errorf("[%s]: [update]: entity with id %d does not exist", g.logSourceName, id)
-		return err
+		return fmt.Errorf("[%s]: [update]: entity with id %d does not exist", g.logSourceName, id)
 	}
 	err = mappers.MapDtoToEntity(updateDto, entity)
 	if err != nil {
@@ -203,7 +202,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Upda
 	}
 	err = g.repository.Update(ctx, entity)
 	if err != nil {
-		return err
+		return fmt.Errorf("entity update error: %s", err.Error())
 	}
 	return nil
 }
@@ -223,7 +222,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Crea
 	}
 	id, err := g.repository.Insert(ctx, *entity)
 	if err != nil {
-		return uuid.UUID{}, err
+		return uuid.UUID{}, fmt.Errorf("entity creation error: %s", err.Error())
 	}
 	return id, nil
 }
@@ -237,7 +236,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Crea
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Delete(ctx context.Context, id uuid.UUID) error {
 	entity, err := g.getByIDExcludeDeleted(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to retrieve by IDs not deleted: %s", err.Error())
 	}
 	if entity == nil {
 		err := fmt.Errorf("[%s]: [delete]: entity with id %d does not exist", g.logSourceName, id)
@@ -249,7 +248,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Dele
 
 	err = g.repository.Update(ctx, entity)
 	if err != nil {
-		return err
+		return fmt.Errorf("entity update error: %s", err.Error())
 	}
 	return nil
 }
