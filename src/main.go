@@ -35,22 +35,26 @@ func main() {
 			infrastructure.NewHTTPLogRepository,
 			infrastructure.NewAppLogRepository,
 			infrastructure.NewLogrusLogger,
+			infrastructure.NewDeviceTemplateStorage,
 			// Application logic
 			services.NewEthernetSwitchService,
 			services.NewHTTPLogService,
 			services.NewAppLogService,
+			services.NewDeviceTemplateService,
 			// WEB API -> Server
 			webapi.NewGinHTTPServer,
 			// WEB API -> Controllers
 			controllers.NewEthernetSwitchGinController,
 			controllers.NewHTTPLogGinController,
 			controllers.NewAppLogGinController,
+			controllers.NewDeviceTemplateController,
 		),
 		fx.Invoke(
 			infrastructure.RegisterLogHooks,
 			controllers.RegisterSwitchController,
 			controllers.RegisterHTTPLogController,
 			controllers.RegisterAppLogController,
+			controllers.RegisterDeviceTemplateController,
 			webapi.StartHTTPServer,
 		),
 	)

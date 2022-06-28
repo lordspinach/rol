@@ -3,6 +3,7 @@ package tests
 import (
 	"os"
 	"rol/app/services"
+	"rol/domain"
 	"testing"
 )
 
@@ -16,7 +17,11 @@ func Test_DeviceTemplateService_Prepare(t *testing.T) {
 	if err != nil {
 		t.Errorf("creating dir failed: %s", err)
 	}
-	deviceTemplateService, err = services.NewDeviceTemplateService("testTemplates", nil)
+	deviceTemplateService, err = services.NewDeviceTemplateService(&domain.AppConfig{
+		Templates: struct {
+			DeviceTemplateDir string `yaml:"deviceTemplateDir"`
+		}{"testTemplates"},
+	}, nil)
 	if err != nil {
 		t.Errorf("creating service failed: %s", err.Error())
 	}

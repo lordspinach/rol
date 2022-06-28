@@ -25,4 +25,7 @@ type AppConfig struct {
 		Level          string `yaml:"level"`
 		LogsToDatabase bool   `yaml:"logsToDatabase"`
 	} `yaml:"logger"`
+	Templates struct {
+		DeviceTemplateDir string `yaml:"deviceTemplateDir"`
+	}
 }

@@ -43,3 +43,7 @@ logger:
   # "trace" - designates finer-grained informational events than the Debug.
   level: "debug"
   logsToDatabase: true
+
+# Templates config
+templates:
+  deviceTemplateDir: "devices"

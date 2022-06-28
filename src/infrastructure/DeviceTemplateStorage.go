@@ -12,8 +12,8 @@ type DeviceTemplateStorage struct {
 }
 
 //NewDeviceTemplateStorage constructor for DeviceTemplateStorage
-func NewDeviceTemplateStorage(dirName string, log *logrus.Logger) (*DeviceTemplateStorage, error) {
-	storage, err := NewYamlGenericTemplateStorage[domain.DeviceTemplate](dirName, log)
+func NewDeviceTemplateStorage(config *domain.AppConfig, log *logrus.Logger) (*DeviceTemplateStorage, error) {
+	storage, err := NewYamlGenericTemplateStorage[domain.DeviceTemplate](config.Templates.DeviceTemplateDir, log)
 	if err != nil {
 		return nil, fmt.Errorf("device templates storage creating error: %s", err.Error())
 	}

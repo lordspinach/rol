@@ -22,8 +22,8 @@ type DeviceTemplateService struct {
 //Params
 //	dirName - relative path in /templates directory
 //	log - logrus logger
-func NewDeviceTemplateService(dirName string, log *logrus.Logger) (*DeviceTemplateService, error) {
-	storage, err := infrastructure.NewDeviceTemplateStorage(dirName, log)
+func NewDeviceTemplateService(config *domain.AppConfig, log *logrus.Logger) (*DeviceTemplateService, error) {
+	storage, err := infrastructure.NewDeviceTemplateStorage(config, log)
 	if err != nil {
 		return nil, fmt.Errorf("device templates service creating error: %s", err.Error())
 	}
