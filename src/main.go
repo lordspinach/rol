@@ -41,6 +41,7 @@ func main() {
 			services.NewEthernetSwitchService,
 			services.NewHTTPLogService,
 			services.NewAppLogService,
+			services.NewDeviceTemplateService,
 			// WEB API -> Server
 			webapi.NewGinHTTPServer,
 			// WEB API -> Controllers
