@@ -115,7 +115,7 @@
                         "type": "string",
                         "description": "log id",
                         "name": "id",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -207,7 +207,7 @@
                                                         "items": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/definitions/dtos.HttpLogDto"
+                                                                "$ref": "#/definitions/dtos.HTTPLogDto"
                                                             }
                                                         }
                                                     }
@@ -239,7 +239,7 @@
                         "type": "string",
                         "description": "log id",
                         "name": "id",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -255,7 +255,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dtos.HttpLogDto"
+                                            "$ref": "#/definitions/dtos.HTTPLogDto"
                                         }
                                     }
                                 }
@@ -479,6 +479,130 @@
                     }
                 }
             }
+        },
+        "/template/device/": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device template"
+                ],
+                "summary": "Gets paginated list of device templates",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Order by field",
+                        "name": "orderBy",
+                        "in": "path"
+                    },
+                    {
+                        "type": "string",
+                        "description": "'asc' or 'desc' for ascending or descending order",
+                        "name": "orderDirection",
+                        "in": "path"
+                    },
+                    {
+                        "type": "string",
+                        "description": "searchable value in entity",
+                        "name": "search",
+                        "in": "path"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "path"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "number of entities per page",
+                        "name": "pageSize",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.ResponseDataDto"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/dtos.PaginatedListDto"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "items": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/dtos.DeviceTemplateDto"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/template/device/{name}": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "device template"
+                ],
+                "summary": "Gets device template by its name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "device template name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.ResponseDataDto"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.DeviceTemplateDto"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -489,9 +613,11 @@
                     "type": "string"
                 },
                 "createdAt": {
+                    "description": "CreatedAt - entity create time",
                     "type": "string"
                 },
                 "id": {
+                    "description": "ID - unique identifier",
                     "type": "string"
                 },
                 "level": {
@@ -505,6 +631,150 @@
                 "source": {
                     "description": "Source - method from which the log was obtained",
                     "type": "string"
+                },
+                "updatedAt": {
+                    "description": "UpdatedAt - entity update time",
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.DeviceTemplateBootStageDto": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "Action for this boot stage.\nCan be: File, CheckPowerSwitch, EmergencyPowerOff,\nPowerOff, EmergencyPowerOn, PowerOn,\nCheckManagement\n\nFor File action:\n\tA stage can only be marked complete if all files have\n\tbeen downloaded by the device via TFTP or DHCP,\n\tafter which the next step can be loaded.",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description of boot stage template",
+                    "type": "string"
+                },
+                "files": {
+                    "description": "Files slice of files for boot stage",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.DeviceTemplateBootStageFileDto"
+                    }
+                },
+                "name": {
+                    "description": "Name of boot stage template",
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.DeviceTemplateBootStageFileDto": {
+            "type": "object",
+            "properties": {
+                "existingFileName": {
+                    "description": "ExistingFileName file name is a real full file path with name on the disk.\nThis path is relative from app directory",
+                    "type": "string"
+                },
+                "virtualFileName": {
+                    "description": "VirtualFileName virtual file name is relative from /\u003cmac-address\u003e/",
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.DeviceTemplateControlDto": {
+            "type": "object",
+            "properties": {
+                "emergency": {
+                    "description": "Emergency how to control device power in case of emergency. As example: POE(For Rpi4), IPMI, ILO or PowerSwitch",
+                    "type": "string"
+                },
+                "nextBoot": {
+                    "description": "NextBoot how to change next boot device. As example: IPMI, ILO or NONE.\nFor example, NONE is used for Rpi4, we control next boot by u-boot files in boot stages.",
+                    "type": "string"
+                },
+                "power": {
+                    "description": "Power how to control device power. As example: POE(For Rpi4), IPMI, ILO or PowerSwitch",
+                    "type": "string"
+                }
+            }
+        },
+        "dtos.DeviceTemplateDto": {
+            "type": "object",
+            "properties": {
+                "control": {
+                    "description": "Control describes how we control the device",
+                    "$ref": "#/definitions/dtos.DeviceTemplateControlDto"
+                },
+                "cpucount": {
+                    "description": "CPUCount count of cpus",
+                    "type": "integer"
+                },
+                "cpumodel": {
+                    "description": "CPUModel model of cpu",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description template description",
+                    "type": "string"
+                },
+                "discBootStages": {
+                    "description": "DiscBootStages slice of boot stage templates for disk boot",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.DeviceTemplateBootStageDto"
+                    }
+                },
+                "manufacturer": {
+                    "description": "Manufacturer device manufacturer",
+                    "type": "string"
+                },
+                "model": {
+                    "description": "Model device model",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name template name",
+                    "type": "string"
+                },
+                "netBootStages": {
+                    "description": "NetBootStages slice of boot stage templates for net boot",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.DeviceTemplateBootStageDto"
+                    }
+                },
+                "networkInterfaces": {
+                    "description": "NetworkInterfaces slice of device network interfaces",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.DeviceTemplateNetworkDto"
+                    }
+                },
+                "ram": {
+                    "description": "RAM the amount of RAM in GB",
+                    "type": "integer"
+                },
+                "usbbootStages": {
+                    "description": "USBBootStages slice of boot stage templates for usb boot",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dtos.DeviceTemplateBootStageDto"
+                    }
+                }
+            }
+        },
+        "dtos.DeviceTemplateNetworkDto": {
+            "type": "object",
+            "properties": {
+                "management": {
+                    "description": "Management only one network interface can be mark as management",
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name of network interface. This field is unique within device template network interfaces",
+                    "type": "string"
+                },
+                "netBoot": {
+                    "description": "NetBoot flags whether the interface can be loaded over the network",
+                    "type": "boolean"
+                },
+                "poein": {
+                    "description": "POEIn only one network interface can be mark as POEIn",
+                    "type": "boolean"
                 }
             }
         },
@@ -552,7 +822,7 @@
                     "type": "string"
                 },
                 "id": {
-                    "description": "Id - unique identifier",
+                    "description": "ID - unique identifier",
                     "type": "string"
                 },
                 "name": {
@@ -606,7 +876,7 @@
                 }
             }
         },
-        "dtos.HttpLogDto": {
+        "dtos.HTTPLogDto": {
             "type": "object",
             "properties": {
                 "clientIP": {
@@ -614,6 +884,7 @@
                     "type": "string"
                 },
                 "createdAt": {
+                    "description": "CreatedAt - entity create time",
                     "type": "string"
                 },
                 "customRequestHeaders": {
@@ -624,11 +895,12 @@
                     "description": "Domain - domain that processed the request",
                     "type": "string"
                 },
-                "httpMethod": {
+                "httpmethod": {
                     "description": "HttpMethod - http method",
                     "type": "string"
                 },
                 "id": {
+                    "description": "ID - unique identifier",
                     "type": "string"
                 },
                 "latency": {
@@ -653,6 +925,10 @@
                 },
                 "responseBody": {
                     "description": "ResponseBody - body of the response",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "UpdatedAt - entity update time",
                     "type": "string"
                 }
             }
