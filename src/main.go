@@ -48,12 +48,14 @@ func main() {
 			controllers.NewEthernetSwitchGinController,
 			controllers.NewHTTPLogGinController,
 			controllers.NewAppLogGinController,
+			controllers.NewDeviceTemplateController,
 		),
 		fx.Invoke(
 			infrastructure.RegisterLogHooks,
 			controllers.RegisterSwitchController,
 			controllers.RegisterHTTPLogController,
 			controllers.RegisterAppLogController,
+			controllers.RegisterDeviceTemplateController,
 			webapi.StartHTTPServer,
 		),
 	)
