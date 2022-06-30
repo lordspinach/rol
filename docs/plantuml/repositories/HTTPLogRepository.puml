@@ -1,0 +1,18 @@
+@startuml
+
+!include ../entities/HTTPLog.puml
+!include GormGenericRepository.puml
+
+package infrastructure {
+    class HTTPLogRepository
+
+    HTTPLogRepository -down-* GormGenericRepository
+
+    note "EntityType is HTTPLog" as HTTPLogTypeNote
+
+    HTTPLogRepository .down. HTTPLogTypeNote
+    GormGenericRepository <.up. HTTPLogTypeNote
+    HTTPLog .. HTTPLogTypeNote
+}
+
+@enduml

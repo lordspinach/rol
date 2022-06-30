@@ -1,11 +1,19 @@
 @startuml
+
 !include ../entities/EthernetSwitch.puml
-!include GenericRepository.puml
+!include GormGenericRepository.puml
 
-class GenericRepository<EthernetSwitch>
-interface IGenericRepository<EthernetSwitch>
+package infrastructure {
+    class EthernetSwitchRepository
 
-class EthernetSwitchRepository<EthernetSwitch>
+    EthernetSwitchRepository -down-* GormGenericRepository
 
-EthernetSwitchRepository *-- GenericRepository
+
+    note "EntityType is EthernetSwitch" as EthernetSwitchTypeNote
+
+    EthernetSwitchRepository .down. EthernetSwitchTypeNote
+    GormGenericRepository <.up. EthernetSwitchTypeNote
+    EthernetSwitch .. EthernetSwitchTypeNote
+}
+
 @enduml

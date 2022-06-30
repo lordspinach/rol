@@ -1,0 +1,17 @@
+@startuml
+
+!include ../entities/Log.puml
+!include GormGenericRepository.puml
+
+package infrastructure {
+    class LogRepository
+
+    LogRepository -down-* GormGenericRepository
+
+    note "EntityType is Log" as LogTypeNote
+
+    LogRepository .down. LogTypeNote
+    GormGenericRepository <.up. LogTypeNote
+    Log .. LogTypeNote
+}
+@enduml
