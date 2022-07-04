@@ -6,7 +6,7 @@ import (
 	"rol/webapi"
 	"rol/webapi/controllers"
 
-	_ "rol/docs"
+	_ "rol/webapi/docs"
 
 	"go.uber.org/fx"
 )

@@ -220,7 +220,7 @@ definitions:
         description: Domain - domain that processed the request
         type: string
       httpmethod:
-        description: HttpMethod - http method
+        description: HTTPMethod - http method
         type: string
       id:
         description: ID - unique identifier
