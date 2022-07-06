@@ -186,9 +186,11 @@ func (e *EthernetSwitchPortService) UpdatePort(ctx context.Context, switchID, id
 //	*dtos.PaginatedListDto[dtos.EthernetSwitchPortDto] - pointer to paginated list of ethernet switches
 //	error - if an error occurs, otherwise nil
 func (e *EthernetSwitchPortService) GetPorts(ctx context.Context, switchID uuid.UUID, search, orderBy, orderDirection string, page, pageSize int) (*dtos.PaginatedListDto[dtos.EthernetSwitchPortDto], error) {
+	paginatedDto := new(dtos.PaginatedListDto[dtos.EthernetSwitchPortDto])
+	paginatedDto.Items = &[]dtos.EthernetSwitchPortDto{}
 	err := e.switchExist(ctx, switchID)
 	if err != nil {
-		return nil, fmt.Errorf("error when checking the existence of the switch: %s", err)
+		return paginatedDto, fmt.Errorf("error when checking the existence of the switch: %s", err)
 	}
 	queryBuilder := e.repository.NewQueryBuilder(ctx)
 	e.excludeDeleted(queryBuilder)

@@ -86,7 +86,7 @@ func (e *EthernetSwitchService) modelIsSupported(model string) bool {
 func (e *EthernetSwitchService) serialIsUnique(ctx context.Context, serial string, id uuid.UUID) error {
 	uniqueSerialQueryBuilder := e.GenericService.repository.NewQueryBuilder(ctx)
 	e.GenericService.excludeDeleted(uniqueSerialQueryBuilder)
-	uniqueSerialQueryBuilder.Where("Serial", "==", serial)
+	uniqueSerialQueryBuilder.Where("Serial", "=", serial)
 	if [16]byte{} != id {
 		uniqueSerialQueryBuilder.Where("ID", "!=", id)
 	}
@@ -103,7 +103,7 @@ func (e *EthernetSwitchService) serialIsUnique(ctx context.Context, serial strin
 func (e *EthernetSwitchService) addressIsUnique(ctx context.Context, serial string, id uuid.UUID) error {
 	uniqueSerialQueryBuilder := e.GenericService.repository.NewQueryBuilder(ctx)
 	e.GenericService.excludeDeleted(uniqueSerialQueryBuilder)
-	uniqueSerialQueryBuilder.Where("Address", "==", serial)
+	uniqueSerialQueryBuilder.Where("Address", "=", serial)
 	if [16]byte{} != id {
 		uniqueSerialQueryBuilder.Where("ID", "!=", id)
 	}

@@ -93,6 +93,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) addS
 }
 
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) getListBasic(ctx context.Context, queryBuilder interfaces.IQueryBuilder, orderBy, orderDirection string, page, pageSize int) (*dtos.PaginatedListDto[DtoType], error) {
+	paginatedDto := &dtos.PaginatedListDto[DtoType]{Items: &[]DtoType{}}
 	pageFinal := page
 	pageSizeFinal := pageSize
 	if page < 1 {
@@ -103,23 +104,23 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) getL
 	}
 	entities, err := g.repository.GetList(ctx, orderBy, orderDirection, pageFinal, pageSizeFinal, queryBuilder)
 	if err != nil {
-		return nil, err
+		return paginatedDto, err
 	}
 	count, err := g.repository.Count(ctx, queryBuilder)
 	if err != nil {
-		return nil, err
+		return paginatedDto, err
 	}
-	dtoArr := new([]DtoType)
+
+	dtoArr := &[]DtoType{}
 	for i := 0; i < len(*entities); i++ {
 		dto := new(DtoType)
 		err = mappers.MapEntityToDto((*entities)[i], dto)
 		if err != nil {
-			return nil, fmt.Errorf("[%s]: [getList]: %s", g.logSourceName, err.Error())
+			return paginatedDto, fmt.Errorf("[%s]: [getList]: %s", g.logSourceName, err.Error())
 		}
 		*dtoArr = append(*dtoArr, *dto)
 	}
 
-	paginatedDto := new(dtos.PaginatedListDto[DtoType])
 	paginatedDto.Page = pageFinal
 	paginatedDto.Size = pageSizeFinal
 	paginatedDto.Total = count
