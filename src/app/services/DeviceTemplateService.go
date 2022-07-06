@@ -41,6 +41,8 @@ func NewDeviceTemplateService(storage interfaces.IGenericTemplateStorage[domain.
 //	*dtos.PaginatedListDto[dtos.DeviceTemplateDto] - pointer to paginated list of device templates
 //	error - if an error occurs, otherwise nil
 func (d *DeviceTemplateService) GetList(ctx context.Context, search, orderBy, orderDirection string, page, pageSize int) (*dtos.PaginatedListDto[dtos.DeviceTemplateDto], error) {
+	paginatedDto := new(dtos.PaginatedListDto[dtos.DeviceTemplateDto])
+	paginatedDto.Items = &[]dtos.DeviceTemplateDto{}
 	pageFinal := page
 	pageSizeFinal := pageSize
 	if page < 1 {
@@ -55,20 +57,20 @@ func (d *DeviceTemplateService) GetList(ctx context.Context, search, orderBy, or
 	}
 	templatesArr, err := d.storage.GetList(ctx, orderBy, orderDirection, pageFinal, pageSizeFinal, queryBuilder)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get device templates: %s", err.Error())
+		return paginatedDto, fmt.Errorf("failed to get device templates: %s", err.Error())
 	}
 	count, err := d.storage.Count(ctx, queryBuilder)
 	if err != nil {
-		return nil, fmt.Errorf("failed to count device templates: %s", err.Error())
+		return paginatedDto, fmt.Errorf("failed to count device templates: %s", err.Error())
 	}
 	dtosArr := make([]dtos.DeviceTemplateDto, len(*templatesArr))
 	for i := range *templatesArr {
 		err := mappers.MapEntityToDto((*templatesArr)[i], &dtosArr[i])
 		if err != nil {
-			return nil, fmt.Errorf("failed to map template to dto: %s", err.Error())
+			return paginatedDto, fmt.Errorf("failed to map template to dto: %s", err.Error())
 		}
 	}
-	paginatedDto := new(dtos.PaginatedListDto[dtos.DeviceTemplateDto])
+
 	paginatedDto.Page = pageFinal
 	paginatedDto.Size = pageSizeFinal
 	paginatedDto.Total = count
