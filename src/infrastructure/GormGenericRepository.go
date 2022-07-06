@@ -131,11 +131,11 @@ func (g *GormGenericRepository[EntityType]) GetList(ctx context.Context, orderBy
 	gormQuery := g.Db.Model(&model).Order(orderString)
 	err := g.addQueryToGorm(gormQuery, queryBuilder)
 	if err != nil {
-		return nil, err
+		return &[]EntityType{}, err
 	}
 	err = gormQuery.Offset(int(offset)).Limit(size).Find(entities).Error
 	if err != nil {
-		return nil, err
+		return &[]EntityType{}, err
 	}
 	return entities, nil
 }
@@ -197,7 +197,7 @@ func (g *GormGenericRepository[EntityType]) GetByIDExtended(ctx context.Context,
 	model := new(EntityType)
 	gormQuery := g.Db.Model(model)
 	fullQueryBuilder := g.NewQueryBuilder(ctx)
-	fullQueryBuilder.Where("ID", "==", id)
+	fullQueryBuilder.Where("ID", "=", id)
 	if queryBuilder != nil {
 		fullQueryBuilder.WhereQuery(queryBuilder)
 	}
