@@ -188,35 +188,39 @@ func (y *YamlGenericTemplateStorage[TemplateType]) GetList(ctx context.Context, 
 	if queryBuilder != nil {
 		query, err := queryBuilder.Build()
 		if err != nil {
-			return nil, fmt.Errorf("query building error: %s", err.Error())
+			return &[]TemplateType{}, fmt.Errorf("query building error: %s", err.Error())
 		}
 		queryArr = query.([]interface{})
 	}
 	if len(queryArr) > 1 {
 		templates, err = y.handleQuery(*y.Templates, queryArr...)
 		if err != nil {
-			return nil, fmt.Errorf("query handling error: %s", err.Error())
+			return &[]TemplateType{}, fmt.Errorf("query handling error: %s", err.Error())
 		}
 	} else {
 		templates = y.Templates
 	}
 
-	err = y.sortTemplatesSlice(templates, orderBy, orderDirection)
-	if err != nil {
-		return nil, fmt.Errorf("templates sorting error: %s", err.Error())
+	var paginatedSlice []TemplateType
+	if len(*templates) > 0 {
+		err = y.sortTemplatesSlice(templates, orderBy, orderDirection)
+		if err != nil {
+			return &[]TemplateType{}, fmt.Errorf("templates sorting error: %s", err.Error())
+		}
+		paginatedSlice, err = y.getPaginatedSlice(*templates, offset, pageSize)
+		if err != nil {
+			return &[]TemplateType{}, fmt.Errorf("templates pagination error: %s", err.Error())
+		}
+	} else {
+		return templates, nil
 	}
-	paginatedSlice, err := y.getPaginatedSlice(*templates, offset, pageSize)
-	if err != nil {
-		return nil, fmt.Errorf("templates pagination error: %s", err.Error())
-	}
-
 	return &paginatedSlice, nil
 }
 
 func (y *YamlGenericTemplateStorage[TemplateType]) getPaginatedSlice(templates []TemplateType, offset, limit int) ([]TemplateType, error) {
 	limit += offset
 	if offset > len(templates) {
-		return nil, fmt.Errorf("paginated slice offset bounds out of range [%d:] with length %d", offset, len(templates))
+		return []TemplateType{}, fmt.Errorf("paginated slice offset bounds out of range [%d:] with length %d", offset, len(templates))
 	}
 	if limit > len(templates) {
 		return templates[offset:], nil
