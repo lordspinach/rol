@@ -1,0 +1,27 @@
+@startuml
+!include GinGenericController.puml
+!include ../services/EthernetSwitchService.puml
+!include ../dto/EthernetSwitch/EthernetSwitchCreateDto.puml
+!include ../dto/EthernetSwitch/EthernetSwitchUpdateDto.puml
+!include ../dto/EthernetSwitch/EthernetSwitchDto.puml
+
+package controllers {
+    class EthernetSwitchGinController {
+        +GetSupportedModels(ctx *gin.Context)
+    }
+
+    note left of EthernetSwitchGinController::GetSupportedModels
+    Get supported switch models
+    end note
+
+    EthernetSwitchGinController .[hidden]up. EthernetSwitch
+
+
+    GinGenericController *-up- EthernetSwitchGinController
+
+    EthernetSwitchGinController .up. EthernetSwitchServiceTypes
+    GinGenericController <.up. EthernetSwitchServiceTypes
+
+}
+
+@enduml
