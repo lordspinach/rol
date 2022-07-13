@@ -6,7 +6,7 @@
 !include ../dto/EthernetSwitch/EthernetSwitchDto.puml
 
 class EthernetSwitchService<EthernetSwitch, EthernetSwitchCreateDto, EthernetSwitchUpdateDto, EthernetSwitchDto> {
-    repository EthernetSwitchRepository
+    -repository EthernetSwitchRepository
     --
 }
 note left of EthernetSwitchService

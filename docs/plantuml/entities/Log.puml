@@ -2,13 +2,13 @@
 !include Entity.puml
 
 class Log {
-    ActionID uuid.UUID `gorm:"index"`
+    +ActionID uuid.UUID `gorm:"index"`
     --
-    Level string
+    +Level string
     --
-    Source string
+    +Source string
     --
-    Message string
+    +Message string
 }
 Log *-- Entity
 

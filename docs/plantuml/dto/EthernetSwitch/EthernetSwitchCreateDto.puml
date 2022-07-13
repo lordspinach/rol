@@ -2,7 +2,7 @@
 !include EthernetSwitchBaseDto.puml
 
 class EthernetSwitchCreateDto {
-    Password string
+    +Password string
 }
 
 EthernetSwitchCreateDto *-- EthernetSwitchBaseDto

@@ -4,19 +4,19 @@
 
 
 class EthernetSwitch {
-    Name string
+    +Name string
     --
-    Serial string
+    +Serial string
     --
-    SwitchModel EthernetSwitchModel
+    +SwitchModel EthernetSwitchModel
     --
-    Address string
+    +Address string
     --
-    Username string
+    +Username string
     --
-    Password string
+    +Password string
     --
-    Ports []EthernetSwitchPort
+    +Ports []EthernetSwitchPort
 }
 EthernetSwitch *-- Entity
 EthernetSwitch::SwitchModel -- EthernetSwitchModel

@@ -5,11 +5,11 @@
 
 
 class EthernetSwitchPort {
-    EthernetSwitchID uuid.UUID
+    +EthernetSwitchID uuid.UUID
     --
-    PoeType EthernetSwitchPoePortType
+    +PoeType EthernetSwitchPoePortType
     --
-    Name string
+    +Name string
 }
 
 EthernetSwitchPort *-- Entity

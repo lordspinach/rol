@@ -5,7 +5,7 @@
 !include ../entities/Log.puml
 
 class LogService<Log, LogDto, LogDto, LogDto> {
-    repository LogRepository
+    -repository LogRepository
     --
 }
 

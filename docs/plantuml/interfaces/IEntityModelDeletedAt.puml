@@ -1,6 +1,6 @@
 @startuml IEntityModelDeletedAt
 interface IEntityModelDeletedAt {
-    SetDeleted()
+    +SetDeleted()
 }
 note left of IEntityModelDeletedAt::SetDeleted
     Set deletion time

@@ -2,11 +2,11 @@
 !include ../interfaces/IGenericService.puml
 
 class GenericService<EntityType, CreateDtoType, UpdateDtoType, DtoType> {
-    repository IGenericRepository
+    -repository IGenericRepository
     --
-    logger *logrus.Logger
+    -logger *logrus.Logger
     --
-    logSourceName string
+    -logSourceName string
 }
 
 GenericService <|.. IGenericService

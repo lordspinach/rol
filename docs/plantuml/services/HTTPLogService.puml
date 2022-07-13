@@ -6,7 +6,7 @@
 !include ../entities/HTTPLog.puml
 
 class HTTPLogService<HTTPLog,HTTPLogDto,HTTPLogDto,HTTPLogDto> {
-    repository HTTPLogRepository
+    -repository HTTPLogRepository
     --
 }
 
