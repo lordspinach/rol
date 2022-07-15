@@ -47,10 +47,11 @@ func Test_EthernetSwitchPortService_Prepare(t *testing.T) {
 	switchPortRepository = infrastructure.NewGormGenericRepository[domain.EthernetSwitchPort](testGenDb, logger)
 	switchRepo := infrastructure.NewEthernetSwitchRepository(testGenDb, logger)
 	switchPortService, err = services.NewEthernetSwitchPortService(switchPortRepository, switchRepo, logger)
+
 	if err != nil {
 		t.Errorf("create new switch port service failed:  %q", err)
 	}
-	switchService, err = services.NewEthernetSwitchService(switchRepo, logger)
+	switchService, err = services.NewEthernetSwitchService(switchRepo, switchPortRepository, logger)
 	if err != nil {
 		t.Errorf("create new switch service failed:  %q", err)
 	}

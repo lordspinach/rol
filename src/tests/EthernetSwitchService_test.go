@@ -1,8 +1,10 @@
 package tests
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -18,7 +20,10 @@ import (
 	"testing"
 )
 
-var testerSwitchService *GenericServiceTest[dtos.EthernetSwitchDto, dtos.EthernetSwitchCreateDto, dtos.EthernetSwitchUpdateDto, domain.EthernetSwitch]
+var (
+	testerSwitchService *GenericServiceTest[dtos.EthernetSwitchDto, dtos.EthernetSwitchCreateDto, dtos.EthernetSwitchUpdateDto, domain.EthernetSwitch]
+	switchPortID        uuid.UUID
+)
 
 func Test_EthernetSwitchService_Prepare(t *testing.T) {
 	dbFileName := "ethernetSwitchService_test.db"
@@ -29,6 +34,7 @@ func Test_EthernetSwitchService_Prepare(t *testing.T) {
 	}
 	err = testGenDb.AutoMigrate(
 		new(domain.EthernetSwitch),
+		new(domain.EthernetSwitchPort),
 	)
 	if err != nil {
 		t.Errorf("migration failed: %v", err)
@@ -38,7 +44,8 @@ func Test_EthernetSwitchService_Prepare(t *testing.T) {
 	var repo interfaces.IGenericRepository[domain.EthernetSwitch]
 	repo = infrastructure.NewGormGenericRepository[domain.EthernetSwitch](testGenDb, logger)
 	var service interfaces.IGenericService[dtos.EthernetSwitchDto, dtos.EthernetSwitchCreateDto, dtos.EthernetSwitchUpdateDto, domain.EthernetSwitch]
-	service, err = services.NewEthernetSwitchService(repo, logger)
+	switchPortRepository = infrastructure.NewGormGenericRepository[domain.EthernetSwitchPort](testGenDb, logger)
+	service, err = services.NewEthernetSwitchService(repo, switchPortRepository, logger)
 	if err != nil {
 		t.Errorf("create new service failed:  %q", err)
 	}
@@ -166,10 +173,33 @@ func Test_EthernetSwitchService_Update(t *testing.T) {
 	}
 }
 
+func Test_EthernetSwitchService_AddPort(t *testing.T) {
+	port := domain.EthernetSwitchPort{
+		Name:             "AutoTestingPort",
+		EthernetSwitchID: testerSwitchService.InsertedID,
+		POEType:          "poe",
+	}
+
+	var err error
+	switchPortID, err = switchPortRepository.Insert(context.TODO(), port)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func Test_EthernetSwitchService_Delete(t *testing.T) {
 	err := testerSwitchService.GenericServiceDelete(testerSwitchService.InsertedID)
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func Test_EthernetSwitchService_CheckPortDeleted(t *testing.T) {
+	expectedErr := "no entity with such id"
+	err := testerSwitchService.GenericServiceGetByID(switchPortID)
+
+	if err == nil || err.Error() != expectedErr {
+		t.Errorf("unexpected error: %s, expect: %s", err, expectedErr)
 	}
 }
 
