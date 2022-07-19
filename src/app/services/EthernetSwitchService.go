@@ -206,6 +206,10 @@ func (e *EthernetSwitchService) Create(ctx context.Context, createDto dtos.Ether
 //Return
 //	error - if an error occurs, otherwise nil
 func (e *EthernetSwitchService) Delete(ctx context.Context, id uuid.UUID) error {
+	err := e.GenericService.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
 	queryBuilder := e.switchPortRepository.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "=", id)
 	ports, err := e.switchPortRepository.GetList(ctx, "", "", 1, 100, queryBuilder)
@@ -219,7 +223,7 @@ func (e *EthernetSwitchService) Delete(ctx context.Context, id uuid.UUID) error 
 			return err
 		}
 	}
-	return e.GenericService.Delete(ctx, id)
+	return nil
 }
 
 //GetSupportedModels Get supported switch models
