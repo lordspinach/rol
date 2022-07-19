@@ -1,6 +1,7 @@
 @startuml
 !include GenericService.puml
 !include ../repositories/EthernetSwitchRepository.puml
+!include ../repositories/EthernetSwitchPortRepository.puml
 !include ../dto/EthernetSwitch/EthernetSwitchCreateDto.puml
 !include ../dto/EthernetSwitch/EthernetSwitchUpdateDto.puml
 !include ../dto/EthernetSwitch/EthernetSwitchDto.puml
@@ -8,6 +9,8 @@
 package app {
     class EthernetSwitchService {
         -repository IGenericRepository<EthernetSwitch>
+        --
+        -switchPortRepository interfaces.IGenericRepository[domain.EthernetSwitchPort]
         --
         +GetSupportedModels()
     }
@@ -24,9 +27,11 @@ package app {
     end note
 
     EthernetSwitchRepository -right- EthernetSwitchService::repository
+    EthernetSwitchPortRepository -right- EthernetSwitchService::switchPortRepository
     GenericService *-up- EthernetSwitchService
 
     EthernetSwitchService .[hidden]up. IGenericRepository
+    EthernetSwitchPortRepository .[hidden]down. EthernetSwitchRepository
 
     note as EthernetSwitchServiceTypes
     EntityType is EthernetSwitch
