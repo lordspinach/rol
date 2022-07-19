@@ -18,6 +18,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -195,11 +196,16 @@ func Test_EthernetSwitchService_Delete(t *testing.T) {
 }
 
 func Test_EthernetSwitchService_CheckPortDeleted(t *testing.T) {
-	expectedErr := "no entity with such id"
-	err := testerSwitchService.GenericServiceGetByID(switchPortID)
-
-	if err == nil || err.Error() != expectedErr {
-		t.Errorf("unexpected error: %s, expect: %s", err, expectedErr)
+	port, err := switchPortRepository.GetByID(context.TODO(), switchPortID)
+	if err != nil {
+		t.Errorf("failed to receive switch port: %s", err.Error())
+	}
+	boundaryDate, err := time.Parse("2006-01-02", "1999-01-01")
+	if err != nil {
+		t.Errorf("date parse error: %s", err.Error())
+	}
+	if port.DeletedAt.Before(boundaryDate) {
+		t.Error("error, the switch port was not deleted")
 	}
 }
 
