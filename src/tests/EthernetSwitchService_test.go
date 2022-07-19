@@ -174,29 +174,45 @@ func Test_EthernetSwitchService_Update(t *testing.T) {
 	}
 }
 
-func Test_EthernetSwitchService_AddPort(t *testing.T) {
-	port := domain.EthernetSwitchPort{
+func Test_EthernetSwitchService_Delete(t *testing.T) {
+	switchCreateDto := dtos.EthernetSwitchCreateDto{
+		EthernetSwitchBaseDto: dtos.EthernetSwitchBaseDto{
+			Name:        "Auto Testing",
+			Serial:      "test_serial",
+			SwitchModel: "unifi_switch_us-24-250w",
+			Address:     "1.1.1.1",
+			Username:    "AutoUser",
+		},
+		//  pragma: allowlist nextline secret
+		Password: "AutoPass",
+	}
+	id, err := testerSwitchService.GenericServiceCreate(switchCreateDto)
+	if err != nil {
+		t.Error(err)
+	} else {
+		testerSwitchService.InsertedID = id
+	}
+
+	portCreateDto := domain.EthernetSwitchPort{
 		Name:             "AutoTestingPort",
 		EthernetSwitchID: testerSwitchService.InsertedID,
 		POEType:          "poe",
 	}
 
-	var err error
-	switchPortID, err = switchPortRepository.Insert(context.TODO(), port)
+	switchPortID, err = switchPortRepository.Insert(context.TODO(), portCreateDto)
 	if err != nil {
 		t.Error(err)
 	}
-}
 
-func Test_EthernetSwitchService_Delete(t *testing.T) {
-	err := testerSwitchService.GenericServiceDelete(testerSwitchService.InsertedID)
+	err = testerSwitchService.GenericServiceDelete(testerSwitchService.InsertedID)
 	if err != nil {
 		t.Error(err)
 	}
-}
 
-func Test_EthernetSwitchService_CheckPortDeleted(t *testing.T) {
 	port, err := switchPortRepository.GetByID(context.TODO(), switchPortID)
+	if port == nil {
+		t.Errorf("get by id failed: %s", err.Error())
+	}
 	if err != nil {
 		t.Errorf("failed to receive switch port: %s", err.Error())
 	}
@@ -213,7 +229,7 @@ func Test_EthernetSwitchService_Create20(t *testing.T) {
 	for i := 1; i <= 20; i++ {
 		createDto := dtos.EthernetSwitchCreateDto{
 			EthernetSwitchBaseDto: dtos.EthernetSwitchBaseDto{
-				Name:        fmt.Sprintf("AutoTesting_%d", i),
+				Name:        fmt.Sprintf("AutoTesting_%d", i+1),
 				Serial:      fmt.Sprintf("auto_serial_%d", i),
 				SwitchModel: "unifi_switch_us-24-250w",
 				Address:     fmt.Sprintf("123.123.123.%d", i+1),
@@ -230,7 +246,7 @@ func Test_EthernetSwitchService_Create20(t *testing.T) {
 }
 
 func Test_EthernetSwitchService_GetList(t *testing.T) {
-	err := testerSwitchService.GenericServiceGetList(20, 1, 10)
+	err := testerSwitchService.GenericServiceGetList(21, 1, 10)
 	if err != nil {
 		t.Error(err)
 	}
