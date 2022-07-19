@@ -193,22 +193,24 @@ func Test_EthernetSwitchService_Delete(t *testing.T) {
 		testerSwitchService.InsertedID = id
 	}
 
+	// here we create a switch port, to make sure it is removed along with the switch
 	portCreateDto := domain.EthernetSwitchPort{
 		Name:             "AutoTestingPort",
 		EthernetSwitchID: testerSwitchService.InsertedID,
 		POEType:          "poe",
 	}
-
 	switchPortID, err = switchPortRepository.Insert(context.TODO(), portCreateDto)
 	if err != nil {
 		t.Error(err)
 	}
 
+	// this is where the deletion takes place
 	err = testerSwitchService.GenericServiceDelete(testerSwitchService.InsertedID)
 	if err != nil {
 		t.Error(err)
 	}
 
+	// since we use soft delete we can still get port from repository
 	port, err := switchPortRepository.GetByID(context.TODO(), switchPortID)
 	if port == nil {
 		t.Errorf("get by id failed: %s", err.Error())
@@ -216,6 +218,7 @@ func Test_EthernetSwitchService_Delete(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to receive switch port: %s", err.Error())
 	}
+	// for sure that port was successfully deleted we need to compare it DeletedAt field with old date like 1999-01-01
 	boundaryDate, err := time.Parse("2006-01-02", "1999-01-01")
 	if err != nil {
 		t.Errorf("date parse error: %s", err.Error())
