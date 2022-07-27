@@ -1,0 +1,11 @@
+@startuml
+
+class HostNetworkDeviceDto {
+    +Name string
+    --
+    +Addresses []string
+    --
+    +Type string
+}
+
+@enduml

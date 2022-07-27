@@ -1,0 +1,14 @@
+@startuml
+
+!include ../interfaces/IHostNetworkManager.puml
+
+class HostNetworkManager {
+    -configFilePath string
+    --
+    -networkConfig  domain.HostNetworkInterfacesConfig
+}
+
+HostNetworkManager -down-|> IHostNetworkManager
+
+
+@enduml

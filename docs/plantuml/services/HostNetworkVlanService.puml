@@ -1,0 +1,23 @@
+@startuml
+
+!include ../dto/HostNetwork/HostNetworkVlanDto.puml
+!include ../dto/HostNetwork/HostNetworkVlanCreateDto.puml
+!include ../managers/HostNetworkManager.puml
+
+class HostNetworkVlanService {
+    -manager HostNetworkManager
+    --
+    +GetList() ([]HostNetworkVlanDto, error)
+    --
+    +GetByName(name string) (HostNetworkVlanDto, error)
+    --
+    +Create(vlan HostNetworkVlanCreateDto) error
+    --
+    +SetAddr(vlanName, addr net.IPNet) error
+    --
+    +Delete(name string) error
+}
+
+HostNetworkVlanService::manager -- HostNetworkManager
+
+@enduml

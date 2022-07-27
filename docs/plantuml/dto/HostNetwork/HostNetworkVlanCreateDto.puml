@@ -1,0 +1,12 @@
+@startuml
+
+class HostNetworkVlanCreateDto {
+    +Addresses []string
+    --
+    +VlanID int
+    --
+    +Master string
+}
+
+
+@enduml

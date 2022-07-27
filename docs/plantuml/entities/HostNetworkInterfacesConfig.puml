@@ -1,0 +1,14 @@
+@startuml
+
+!include HostNetworkDevice.puml
+!include HostNetworkVlan.puml
+
+
+class HostNetworkInterfacesConfig {
+    +Devices []HostNetworkDevice
+    --
+    +Vlans   []HostNetworkVlan
+}
+
+
+@enduml

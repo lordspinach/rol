@@ -1,0 +1,20 @@
+@startuml
+
+!include ../interfaces/IHostNetworkLink.puml
+
+class HostNetworkLink {
+    +Name string
+    --
+    +Addresses []net.IPNet
+    --
+    +Type string
+}
+
+note left of HostNetworkLink::Type
+Default value is "none"
+because HostNetworkLink is a basic class
+end note
+
+HostNetworkLink --|> IHostNetworkLink
+
+@enduml

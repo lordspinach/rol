@@ -1,0 +1,5 @@
+@startuml
+class GlobalDIParameters {
+    RootPath string
+}
+@enduml

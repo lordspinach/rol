@@ -1,0 +1,10 @@
+@startuml
+
+!include HostNetworkLink.puml
+
+class HostNetworkDevice{
+}
+
+HostNetworkDevice --* HostNetworkLink
+
+@enduml

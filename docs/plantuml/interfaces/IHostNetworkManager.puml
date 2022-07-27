@@ -1,0 +1,57 @@
+@startuml
+
+!include ../entities/HostNetworkDevice.puml
+!include ../entities/HostNetworkVlan.puml
+
+interface IHostNetworkManager {
+    +GetList() ([]IHostNetworkLink, error)
+    --
+    +GetByName(name string) (IHostNetworkLink, error)
+    --
+    +CreateVlan(master string, vlanID int) (string, error)
+    --
+    +DeleteLinkByName(name string) error
+    --
+    +SetAddr(linkName string, addr net.IPNet) error
+    --
+    +SaveConfiguration() error
+    --
+    +RestoreConfiguration() error
+    --
+    +LoadConfiguration() error
+}
+
+note right of IHostNetworkManager::GetList
+Gets list of host network interfaces
+end note
+
+note right of IHostNetworkManager::GetByName
+Gets host network interface by its name
+end note
+
+note right of IHostNetworkManager::CreateVlan
+Create host vlan interface with name rol.{Master}.{VlanID}
+end note
+
+note right of IHostNetworkManager::DeleteLinkByName
+Deletes interface on host by its name
+end note
+
+note right of IHostNetworkManager::SetAddr
+Sets new ip address for network interface
+end note
+
+note right of IHostNetworkManager::SaveConfiguration
+Save current host network configuration to the config file
+Save previous config file to .back file
+end note
+
+note right of IHostNetworkManager::RestoreConfiguration
+Restore host network configuration from .back file
+end note
+
+note right of IHostNetworkManager::LoadConfiguration
+Load host network configuration from config file
+end note
+
+@enduml
