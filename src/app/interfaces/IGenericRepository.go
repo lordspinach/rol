@@ -19,7 +19,7 @@ type IGenericRepository[EntityType IEntityModel] interface {
 	//Return
 	//	 *[]EntityType - pointer to array of the entities.
 	//	error - if an error occurred, otherwise nil
-	GetList(ctx context.Context, orderBy string, orderDirection string, page int, size int, queryBuilder IQueryBuilder) (*[]EntityType, error)
+	GetList(ctx context.Context, orderBy string, orderDirection string, page int, size int, queryBuilder IQueryBuilder) ([]EntityType, error)
 	//Count
 	// Get count of entities with filtering
 	//Params
@@ -44,7 +44,7 @@ type IGenericRepository[EntityType IEntityModel] interface {
 	//Return
 	//  *EntityType - pointer to the entity.
 	//	error - if an error occurred, otherwise nil
-	GetByID(ctx context.Context, id uuid.UUID) (*EntityType, error)
+	GetByID(ctx context.Context, id uuid.UUID) (EntityType, error)
 	//GetByIDExtended Get entity by ID and query from repository
 	//Params
 	//	ctx - context is used only for logging
@@ -53,7 +53,7 @@ type IGenericRepository[EntityType IEntityModel] interface {
 	//Return
 	//	*EntityType - point to entity if existed, otherwise nil
 	//	error - if an error occurs, otherwise nil
-	GetByIDExtended(ctx context.Context, id uuid.UUID, queryBuilder IQueryBuilder) (*EntityType, error)
+	GetByIDExtended(ctx context.Context, id uuid.UUID, queryBuilder IQueryBuilder) (EntityType, error)
 	//Update
 	//	Save the changes to the existing entity in the repository.
 	//Params

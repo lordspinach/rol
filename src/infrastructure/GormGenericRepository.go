@@ -119,7 +119,7 @@ func generateOrderString(orderBy string, orderDirection string) string {
 //Return
 //	*[]EntityType - pointer to array of entities
 //	error - if an error occurs, otherwise nil
-func (g *GormGenericRepository[EntityType]) GetList(ctx context.Context, orderBy string, orderDirection string, page int, size int, queryBuilder interfaces.IQueryBuilder) (*[]EntityType, error) {
+func (g *GormGenericRepository[EntityType]) GetList(ctx context.Context, orderBy string, orderDirection string, page int, size int, queryBuilder interfaces.IQueryBuilder) ([]EntityType, error) {
 	g.log(ctx, "debug", fmt.Sprintf("GetList: IN: orderBy=%s, orderDirection=%s, page=%d, size=%d, queryBuilder=%s", orderBy, orderDirection, page, size, queryBuilder))
 	model := new(EntityType)
 	entities := &[]EntityType{}
@@ -137,7 +137,7 @@ func (g *GormGenericRepository[EntityType]) GetList(ctx context.Context, orderBy
 	if err != nil {
 		return nil, err
 	}
-	return entities, nil
+	return *entities, nil
 }
 
 //Count
@@ -173,15 +173,15 @@ func (g *GormGenericRepository[EntityType]) Count(ctx context.Context, queryBuil
 //Return
 //	*EntityType - point to entity
 //	error - if an error occurs, otherwise nil
-func (g *GormGenericRepository[EntityType]) GetByID(ctx context.Context, id uuid.UUID) (*EntityType, error) {
+func (g *GormGenericRepository[EntityType]) GetByID(ctx context.Context, id uuid.UUID) (EntityType, error) {
 	g.log(ctx, "debug", fmt.Sprintf("GetByID: id=%d", id))
 	entity := new(EntityType)
 	err := g.Db.First(entity, id).Error
 	if err != nil {
-		return nil, err
+		return *entity, err
 	}
 	g.log(ctx, "debug", fmt.Sprintf("GetByID: entity=%+v", entity))
-	return entity, nil
+	return *entity, nil
 }
 
 //GetByIDExtended Get entity by ID and query from repository
@@ -192,7 +192,7 @@ func (g *GormGenericRepository[EntityType]) GetByID(ctx context.Context, id uuid
 //Return
 //	*EntityType - point to entity
 //	error - if an error occurs, otherwise nil
-func (g *GormGenericRepository[EntityType]) GetByIDExtended(ctx context.Context, id uuid.UUID, queryBuilder interfaces.IQueryBuilder) (*EntityType, error) {
+func (g *GormGenericRepository[EntityType]) GetByIDExtended(ctx context.Context, id uuid.UUID, queryBuilder interfaces.IQueryBuilder) (EntityType, error) {
 	g.log(ctx, "debug", fmt.Sprintf("GetByIDExtended: id=%s, query builder: %s", id, queryBuilder))
 	model := new(EntityType)
 	gormQuery := g.Db.Model(model)
@@ -203,20 +203,20 @@ func (g *GormGenericRepository[EntityType]) GetByIDExtended(ctx context.Context,
 	}
 	err := g.addQueryToGorm(gormQuery, fullQueryBuilder)
 	if err != nil {
-		return nil, fmt.Errorf("failed add query to gorm query: %s", err)
+		return *model, fmt.Errorf("failed add query to gorm query: %s", err)
 	}
 	entities := &[]EntityType{}
 	var entity *EntityType
 	err = gormQuery.Find(entities).Error
 	if err != nil {
-		return nil, fmt.Errorf("gorm query db error: %s", err)
+		return *model, fmt.Errorf("gorm query db error: %s", err)
 	}
 	if len(*entities) < 1 {
-		return nil, nil
+		return *model, nil
 	}
 	entity = &(*entities)[0]
 	g.log(ctx, "debug", fmt.Sprintf("GetByID: entity=%+v", entity))
-	return entity, nil
+	return *entity, nil
 }
 
 //Update

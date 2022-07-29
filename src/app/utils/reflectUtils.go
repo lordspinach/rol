@@ -28,3 +28,12 @@ func GetStringFieldsNames(value interface{}, stringFieldNames *[]string) {
 		}
 	}
 }
+
+func GetName(value interface{}) string {
+	valueOf := reflect.ValueOf(value)
+	if valueOf.Kind() == reflect.Ptr {
+		valueOf = valueOf.Elem()
+	}
+	name := valueOf.FieldByName("Name")
+	return name.String()
+}
