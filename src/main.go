@@ -48,12 +48,14 @@ func main() {
 			infrastructure.NewLogrusLogger,
 			infrastructure.NewEthernetSwitchPortRepository,
 			infrastructure.NewDeviceTemplateStorage,
+			infrastructure.NewHostNetworkManager,
 			// Application logic
 			services.NewEthernetSwitchService,
 			services.NewHTTPLogService,
 			services.NewAppLogService,
 			services.NewEthernetSwitchPortService,
 			services.NewDeviceTemplateService,
+			services.NewHostNetworkVlanService,
 			// WEB API -> Server
 			webapi.NewGinHTTPServer,
 			// WEB API -> Controllers
@@ -62,6 +64,7 @@ func main() {
 			controllers.NewAppLogGinController,
 			controllers.NewEthernetSwitchPortGinController,
 			controllers.NewDeviceTemplateController,
+			controllers.NewHostNetworkVlanController,
 		),
 		fx.Invoke(
 			infrastructure.RegisterLogHooks,
@@ -70,6 +73,7 @@ func main() {
 			controllers.RegisterAppLogController,
 			controllers.RegisterEthernetSwitchPortController,
 			controllers.RegisterDeviceTemplateController,
+			controllers.RegisterHostNetworkVlanController,
 			webapi.StartHTTPServer,
 		),
 	)
