@@ -53,6 +53,9 @@ func MapEntityToDto(entity interface{}, dto interface{}) error {
 	//DeviceTemplate
 	case domain.DeviceTemplate:
 		MapDeviceTemplateToDto(entity.(domain.DeviceTemplate), dto.(*dtos.DeviceTemplateDto))
+	//HostNetworkVlan
+	case domain.HostNetworkVlan:
+		MapHostNetworkVlanToDto(entity.(domain.HostNetworkVlan), dto.(*dtos.HostNetworkVlanDto))
 	default:
 		return fmt.Errorf("[mapper]: Can't find route for map entity %+v to dto %+v", entity, dto)
 	}
