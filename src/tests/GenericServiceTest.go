@@ -9,6 +9,7 @@ import (
 	"os"
 	"reflect"
 	"rol/app/interfaces"
+	"rol/app/utils"
 	"strings"
 )
 
@@ -63,10 +64,11 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 	if err != nil {
 		return fmt.Errorf("get by id failed: %s", err)
 	}
-	if dto == nil {
+	dtoName := utils.GetName(dto)
+	if dtoName == "" {
 		return fmt.Errorf("no entity with such id")
 	}
-	value := reflect.ValueOf(*dto).FieldByName("ID")
+	value := reflect.ValueOf(dto).FieldByName("ID")
 
 	obtainedID, err := getUUIDFromReflectArray(value)
 	if err != nil {
@@ -89,7 +91,7 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 		return fmt.Errorf("get by id failed: %s", err)
 	}
 	expectedName := reflect.ValueOf(dto).FieldByName("Name").String()
-	obtainedName := reflect.ValueOf(*obtainedDto).FieldByName("Name").String()
+	obtainedName := reflect.ValueOf(obtainedDto).FieldByName("Name").String()
 
 	if obtainedName != expectedName {
 		return fmt.Errorf("unexpected entity name %q, expect %q", obtainedName, expectedName)
@@ -104,11 +106,12 @@ func (g *GenericServiceTest[DtoType, CreateDtoType, UpdateDtoType, EntityType]) 
 		return fmt.Errorf("delete failed: %s", err)
 	}
 	dto, err := g.Service.GetByID(g.Context, id)
-	if err != nil {
+	if err.Error() != "failed to get entity by id basic: entity not found" {
 		return err
 	}
-	if dto != nil {
-		return fmt.Errorf("unexpected entity %v, expect nil", dto)
+	dtoName := utils.GetName(dto)
+	if dtoName != "" {
+		return fmt.Errorf("unexpected entity %v", dto)
 	}
 	return nil
 }

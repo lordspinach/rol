@@ -47,7 +47,7 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryGetByID(id uuid.UUI
 		return fmt.Errorf("get by id failed: %s", err)
 	}
 
-	value := reflect.ValueOf(*entity).FieldByName("ID")
+	value := reflect.ValueOf(entity).FieldByName("ID")
 
 	obtainedID, err := getUUIDFromReflectArray(value)
 	if err != nil {
@@ -71,7 +71,7 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryUpdate(entity Entit
 		return fmt.Errorf("get by id failed:  %s", err)
 	}
 	expectedName := reflect.ValueOf(entity).FieldByName("Name").String()
-	obtainedName := reflect.ValueOf(*updatedEntity).FieldByName("Name").String()
+	obtainedName := reflect.ValueOf(updatedEntity).FieldByName("Name").String()
 	if obtainedName != expectedName {
 		return fmt.Errorf("unexpected name %s, expect %s", obtainedName, expectedName)
 	}
@@ -84,8 +84,8 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryGetList() error {
 	if err != nil {
 		return fmt.Errorf("get list failed:  %s", err)
 	}
-	if len(*entityArr) != 1 {
-		return fmt.Errorf("array length %d, expect 1", len(*entityArr))
+	if len(entityArr) != 1 {
+		return fmt.Errorf("array length %d, expect 1", len(entityArr))
 	}
 	return nil
 }
@@ -105,22 +105,22 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryPagination(page, si
 	if err != nil {
 		return fmt.Errorf("get list failed: %s", err)
 	}
-	if len(*entityArrFirstPage) != size {
-		return fmt.Errorf("array length on %d page %d, expect %d", page, len(*entityArrFirstPage), size)
+	if len(entityArrFirstPage) != size {
+		return fmt.Errorf("array length on %d page %d, expect %d", page, len(entityArrFirstPage), size)
 	}
 	entityArrSecondPage, err := g.Repository.GetList(g.Context, "created_at", "asc", page+1, size, nil)
 	if err != nil {
 		return fmt.Errorf("get list failed: %s", err)
 	}
-	if len(*entityArrSecondPage) != size {
-		return fmt.Errorf("array length on next page %d, expect %d", len(*entityArrSecondPage), size)
+	if len(entityArrSecondPage) != size {
+		return fmt.Errorf("array length on next page %d, expect %d", len(entityArrSecondPage), size)
 	}
-	firstPageValue := reflect.ValueOf(*entityArrFirstPage).Index(0).FieldByName("ID")
+	firstPageValue := reflect.ValueOf(entityArrFirstPage).Index(0).FieldByName("ID")
 	firstPageID, err := getUUIDFromReflectArray(firstPageValue)
 	if err != nil {
 		return fmt.Errorf("convert reflect array to uuid failed: %s", err)
 	}
-	secondPageValue := reflect.ValueOf(*entityArrSecondPage).Index(0).FieldByName("ID")
+	secondPageValue := reflect.ValueOf(entityArrSecondPage).Index(0).FieldByName("ID")
 	secondPageID, err := getUUIDFromReflectArray(secondPageValue)
 	if err != nil {
 		return fmt.Errorf("convert reflect array to uuid failed: %s", err)
@@ -137,11 +137,11 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositorySort() error {
 	if err != nil {
 		return fmt.Errorf("get list failed: %s", err)
 	}
-	if len(*entityArr) != 10 {
-		return fmt.Errorf("array length %d, expect 10", len(*entityArr))
+	if len(entityArr) != 10 {
+		return fmt.Errorf("array length %d, expect 10", len(entityArr))
 	}
-	index := len(*entityArr) / 2
-	name := reflect.ValueOf(*entityArr).Index(index).FieldByName("Name").String()
+	index := len(entityArr) / 2
+	name := reflect.ValueOf(entityArr).Index(index).FieldByName("Name").String()
 
 	if name != fmt.Sprintf("AutoTesting_%d", index) {
 		return fmt.Errorf("sort failed: got %s name, expect AutoTesting_%d", name, index)
@@ -155,8 +155,8 @@ func (g *GenericRepositoryTest[EntityType]) GenericRepositoryFilter(queryBuilder
 	if err != nil {
 		return fmt.Errorf("get list failed: %s", err)
 	}
-	if len(*entityArr) != 1 {
-		return fmt.Errorf("array length %d, expect 1", len(*entityArr))
+	if len(entityArr) != 1 {
+		return fmt.Errorf("array length %d, expect 1", len(entityArr))
 	}
 	return nil
 }
