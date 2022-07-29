@@ -1,15 +1,23 @@
 package main
 
 import (
+	"path/filepath"
 	"rol/app/services"
+	"rol/domain"
 	"rol/infrastructure"
 	"rol/webapi"
 	"rol/webapi/controllers"
+	"runtime"
 
 	_ "rol/webapi/swagger"
 
 	"go.uber.org/fx"
 )
+
+func SetRootPath() domain.GlobalDIParameters {
+	_, filePath, _, _ := runtime.Caller(0)
+	return domain.GlobalDIParameters{RootPath: filepath.Dir(filePath)}
+}
 
 // @title Rack of labs API
 // @version version(1.0)
@@ -28,6 +36,8 @@ import (
 func main() {
 	app := fx.New(
 		fx.Provide(
+			// Domains
+			SetRootPath,
 			// Realizations
 			infrastructure.NewYmlConfig,
 			infrastructure.NewGormEntityDb,
