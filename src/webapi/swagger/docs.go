@@ -916,6 +916,248 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/vlan/": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vlan"
+                ],
+                "summary": "Get list of host network vlans",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.ResponseDataDto"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/dtos.PaginatedListDto"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "items": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/dtos.HostNetworkVlanDto"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vlan"
+                ],
+                "summary": "Create new host vlan",
+                "parameters": [
+                    {
+                        "description": "Host vlan fields",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.HostNetworkVlanCreateDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.ResponseDataDto"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/vlan/reset-changes": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vlan"
+                ],
+                "summary": "ResetChanges reset all unsaved changes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ResponseDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/vlan/save-changes": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vlan"
+                ],
+                "summary": "SaveChanges saves changes to config file",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ResponseDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/vlan/{name}": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vlan"
+                ],
+                "summary": "Gets vlan port by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Vlan name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dtos.ResponseDataDto"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dtos.HostNetworkVlanDto"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vlan"
+                ],
+                "summary": "Sets address to host network vlan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Vlan name",
+                        "name": "name",
+                        "in": "path"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "addr",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ResponseDto"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vlan"
+                ],
+                "summary": "Delete host network vlan by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Vlan name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ResponseDto"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1311,6 +1553,37 @@ const docTemplate = `{
                 "updatedAt": {
                     "description": "UpdatedAt - entity update time",
                     "type": "string"
+                }
+            }
+        },
+        "dtos.HostNetworkVlanCreateDto": {
+            "type": "object",
+            "properties": {
+                "master": {
+                    "type": "string"
+                },
+                "vlanID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dtos.HostNetworkVlanDto": {
+            "type": "object",
+            "properties": {
+                "addresses": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "master": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "vlanID": {
+                    "type": "integer"
                 }
             }
         },

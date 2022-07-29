@@ -301,6 +301,26 @@ definitions:
         description: UpdatedAt - entity update time
         type: string
     type: object
+  dtos.HostNetworkVlanCreateDto:
+    properties:
+      master:
+        type: string
+      vlanID:
+        type: integer
+    type: object
+  dtos.HostNetworkVlanDto:
+    properties:
+      addresses:
+        items:
+          type: string
+        type: array
+      master:
+        type: string
+      name:
+        type: string
+      vlanID:
+        type: integer
+    type: object
   dtos.PaginatedListDto:
     properties:
       items:
@@ -888,4 +908,149 @@ paths:
       summary: Gets device template by its name
       tags:
       - device template
+  /vlan/:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.ResponseDataDto'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/dtos.PaginatedListDto'
+                  - properties:
+                      items:
+                        items:
+                          $ref: '#/definitions/dtos.HostNetworkVlanDto'
+                        type: array
+                    type: object
+              type: object
+      summary: Get list of host network vlans
+      tags:
+      - vlan
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Host vlan fields
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.HostNetworkVlanCreateDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.ResponseDataDto'
+            - properties:
+                data:
+                  type: string
+              type: object
+      summary: Create new host vlan
+      tags:
+      - vlan
+  /vlan/{name}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Vlan name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.ResponseDto'
+      summary: Delete host network vlan by name
+      tags:
+      - vlan
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Vlan name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.ResponseDataDto'
+            - properties:
+                data:
+                  $ref: '#/definitions/dtos.HostNetworkVlanDto'
+              type: object
+      summary: Gets vlan port by name
+      tags:
+      - vlan
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Vlan name
+        in: path
+        name: name
+        type: string
+      - description: Address
+        in: path
+        name: addr
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.ResponseDto'
+      summary: Sets address to host network vlan
+      tags:
+      - vlan
+  /vlan/reset-changes:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.ResponseDto'
+      summary: ResetChanges reset all unsaved changes
+      tags:
+      - vlan
+  /vlan/save-changes:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.ResponseDto'
+      summary: SaveChanges saves changes to config file
+      tags:
+      - vlan
 swagger: "2.0"
