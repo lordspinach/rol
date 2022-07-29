@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"rol/app/interfaces"
+	"rol/app/utils"
 	"rol/dtos"
 	"strconv"
 
@@ -103,7 +104,8 @@ func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]
 		}
 		return
 	}
-	if dto == nil {
+	dtoName := utils.GetName(dto)
+	if dtoName == "" {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
 	}

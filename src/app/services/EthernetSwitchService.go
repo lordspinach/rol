@@ -94,7 +94,7 @@ func (e *EthernetSwitchService) serialIsUnique(ctx context.Context, serial strin
 	if err != nil {
 		return fmt.Errorf("get list error: %s", err)
 	}
-	if len(*serialEthSwitchList) > 0 {
+	if len(serialEthSwitchList) > 0 {
 		return fmt.Errorf("switch with this serial number already exist")
 	}
 	return nil
@@ -111,7 +111,7 @@ func (e *EthernetSwitchService) addressIsUnique(ctx context.Context, serial stri
 	if err != nil {
 		return fmt.Errorf("get list error: %s", err)
 	}
-	if len(*serialEthSwitchList) > 0 {
+	if len(serialEthSwitchList) > 0 {
 		return fmt.Errorf("switch with this address already exist")
 	}
 	return nil
@@ -128,7 +128,7 @@ func (e *EthernetSwitchService) addressIsUnique(ctx context.Context, serial stri
 //Return
 //	*dtos.PaginatedListDto[dtos.EthernetSwitchDto] - pointer to paginated list of ethernet switches
 //	error - if an error occurs, otherwise nil
-func (e *EthernetSwitchService) GetList(ctx context.Context, search, orderBy, orderDirection string, page, pageSize int) (*dtos.PaginatedListDto[dtos.EthernetSwitchDto], error) {
+func (e *EthernetSwitchService) GetList(ctx context.Context, search, orderBy, orderDirection string, page, pageSize int) (dtos.PaginatedListDto[dtos.EthernetSwitchDto], error) {
 	return e.GenericService.GetList(ctx, search, orderBy, orderDirection, page, pageSize)
 }
 
@@ -139,7 +139,7 @@ func (e *EthernetSwitchService) GetList(ctx context.Context, search, orderBy, or
 //Return
 //	*dtos.EthernetSwitchDto - point to ethernet switch dto
 //	error - if an error occurs, otherwise nil
-func (e *EthernetSwitchService) GetByID(ctx context.Context, id uuid.UUID) (*dtos.EthernetSwitchDto, error) {
+func (e *EthernetSwitchService) GetByID(ctx context.Context, id uuid.UUID) (dtos.EthernetSwitchDto, error) {
 	return e.GenericService.GetByID(ctx, id)
 }
 

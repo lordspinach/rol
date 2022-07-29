@@ -76,7 +76,7 @@ func (e *EthernetSwitchPortGinController) GetPortByID(ctx *gin.Context) {
 			e.logger.Errorf("%s : %s", err, controllerErr)
 		}
 	}
-	if dto == nil {
+	if dto.Name == "" {
 		ctx.AbortWithStatus(http.StatusNotFound)
 	}
 	responseDto := &dtos.ResponseDataDto{

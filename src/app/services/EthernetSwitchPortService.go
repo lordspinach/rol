@@ -47,7 +47,7 @@ func (e *EthernetSwitchPortService) switchExist(ctx context.Context, switchID uu
 	if err != nil {
 		return fmt.Errorf("failed to get ethernet switch: %s", err)
 	}
-	if ethernetSwitch == nil {
+	if ethernetSwitch.Name == "" {
 		return fmt.Errorf("failed to get ethernet switch: switch not found")
 	}
 	return nil
@@ -82,7 +82,7 @@ func (e *EthernetSwitchPortService) portNameIsUniqueWithinTheSwitch(ctx context.
 	if err != nil {
 		return fmt.Errorf("get list error: %s", err)
 	}
-	if len(*ethSwitchPortsList) > 0 {
+	if len(ethSwitchPortsList) > 0 {
 		return fmt.Errorf("switch with this address already exist")
 	}
 	return nil
@@ -96,10 +96,10 @@ func (e *EthernetSwitchPortService) portNameIsUniqueWithinTheSwitch(ctx context.
 //Return
 //	*dtos.EthernetSwitchPortDto - point to ethernet switch port dto, if existed, otherwise nil
 //	error - if an error occurs, otherwise nil
-func (e *EthernetSwitchPortService) GetPortByID(ctx context.Context, switchID, id uuid.UUID) (*dtos.EthernetSwitchPortDto, error) {
+func (e *EthernetSwitchPortService) GetPortByID(ctx context.Context, switchID, id uuid.UUID) (dtos.EthernetSwitchPortDto, error) {
 	err := e.switchExist(ctx, switchID)
 	if err != nil {
-		return nil, fmt.Errorf("error when checking the existence of the switch: %s", err)
+		return dtos.EthernetSwitchPortDto{}, fmt.Errorf("error when checking the existence of the switch: %s", err)
 	}
 	queryBuilder := e.repository.NewQueryBuilder(ctx)
 	e.excludeDeleted(queryBuilder)
@@ -181,10 +181,10 @@ func (e *EthernetSwitchPortService) UpdatePort(ctx context.Context, switchID, id
 //Return
 //	*dtos.PaginatedListDto[dtos.EthernetSwitchPortDto] - pointer to paginated list of ethernet switches
 //	error - if an error occurs, otherwise nil
-func (e *EthernetSwitchPortService) GetPorts(ctx context.Context, switchID uuid.UUID, search, orderBy, orderDirection string, page, pageSize int) (*dtos.PaginatedListDto[dtos.EthernetSwitchPortDto], error) {
+func (e *EthernetSwitchPortService) GetPorts(ctx context.Context, switchID uuid.UUID, search, orderBy, orderDirection string, page, pageSize int) (dtos.PaginatedListDto[dtos.EthernetSwitchPortDto], error) {
 	err := e.switchExist(ctx, switchID)
 	if err != nil {
-		return nil, fmt.Errorf("error when checking the existence of the switch: %s", err)
+		return dtos.PaginatedListDto[dtos.EthernetSwitchPortDto]{}, fmt.Errorf("error when checking the existence of the switch: %s", err)
 	}
 	queryBuilder := e.repository.NewQueryBuilder(ctx)
 	e.excludeDeleted(queryBuilder)
@@ -213,7 +213,7 @@ func (e *EthernetSwitchPortService) DeletePort(ctx context.Context, switchID, id
 	if err != nil {
 		return fmt.Errorf("failed to get by id: %s", err)
 	}
-	if entity == nil {
+	if entity.Name == "" {
 		return fmt.Errorf("ethernet switch port is not exist")
 	}
 	return e.GenericService.Delete(ctx, id)
