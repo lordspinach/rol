@@ -48,7 +48,7 @@ func (e *EthernetSwitchPortService) switchExist(ctx context.Context, switchID uu
 		return errors.Internal.Wrap(err, "repository failed to get ethernet switch")
 	}
 	if ethernetSwitch == nil {
-		return errors.NotFound.Wrap(err, "switch not found")
+		return errors.NotFound.New("switch not found")
 	}
 	return nil
 }

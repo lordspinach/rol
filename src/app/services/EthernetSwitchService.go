@@ -198,7 +198,7 @@ func (e *EthernetSwitchService) Create(ctx context.Context, createDto dtos.Ether
 		return [16]byte{}, errors.Validation.Wrap(err, "validation failed")
 	}
 	if !e.modelIsSupported(createDto.SwitchModel) {
-		return [16]byte{}, errors.Validation.Wrap(err, "switch model is not supported")
+		return [16]byte{}, errors.Validation.New("switch model is not supported")
 	}
 	err = e.serialIsUnique(ctx, createDto.Serial, [16]byte{})
 	if err != nil {
