@@ -96,7 +96,9 @@ func (e *EthernetSwitchService) serialIsUnique(ctx context.Context, serial strin
 		return errors.Internal.Wrap(err, "service failed get list")
 	}
 	if len(*serialEthSwitchList) > 0 {
-		return errors.Validation.New("switch with this serial number already exist")
+		err = errors.Validation.New("switch with this serial number already exist")
+		err = errors.AddErrorContext(err, "Serial", err.Error())
+		return err
 	}
 	return nil
 }
@@ -113,7 +115,9 @@ func (e *EthernetSwitchService) addressIsUnique(ctx context.Context, serial stri
 		return errors.Internal.Wrap(err, "service failed get list")
 	}
 	if len(*serialEthSwitchList) > 0 {
-		return errors.Validation.New("switch with this address already exist")
+		err = errors.Validation.New("switch with this address already exist")
+		err = errors.AddErrorContext(err, "Address", err.Error())
+		return err
 	}
 	return nil
 }
@@ -198,7 +202,9 @@ func (e *EthernetSwitchService) Create(ctx context.Context, createDto dtos.Ether
 		return [16]byte{}, errors.Validation.Wrap(err, "validation failed")
 	}
 	if !e.modelIsSupported(createDto.SwitchModel) {
-		return [16]byte{}, errors.Validation.New("switch model is not supported")
+		err = errors.Validation.New("switch model is not supported")
+		err = errors.AddErrorContext(err, "SwitchModel", err.Error())
+		return [16]byte{}, err
 	}
 	err = e.serialIsUnique(ctx, createDto.Serial, [16]byte{})
 	if err != nil {

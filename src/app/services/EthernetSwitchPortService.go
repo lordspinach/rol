@@ -83,7 +83,9 @@ func (e *EthernetSwitchPortService) portNameIsUniqueWithinTheSwitch(ctx context.
 		return errors.Internal.Wrap(err, "service failed get list")
 	}
 	if len(*ethSwitchPortsList) > 0 {
-		return errors.Validation.New("port with this name already exist")
+		err = errors.Validation.New("port with this name already exist")
+		err = errors.AddErrorContext(err, "Name", err.Error())
+		return err
 	}
 	return nil
 }
