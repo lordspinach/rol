@@ -54,7 +54,7 @@ func MapEntityToDto(entity interface{}, dto interface{}) error {
 	case domain.DeviceTemplate:
 		MapDeviceTemplateToDto(entity.(domain.DeviceTemplate), dto.(*dtos.DeviceTemplateDto))
 	default:
-		return errors.Internal.Newf("can't find route for map dto %+v to entity %+v", dto, entity)
+		return errors.Internal.Newf("can't find route for map entity %+v to dto %+v", dto, entity)
 	}
 	return nil
 }

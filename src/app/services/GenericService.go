@@ -178,11 +178,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) getB
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) GetByID(ctx context.Context, id uuid.UUID) (*DtoType, error) {
 	queryBuilder := g.repository.NewQueryBuilder(ctx)
 	g.excludeDeleted(queryBuilder)
-	dto, err := g.getByIDBasic(ctx, id, queryBuilder)
-	if err != nil {
-		return nil, errors.Internal.Wrap(err, "error map entity to dto")
-	}
-	return dto, nil
+	return g.getByIDBasic(ctx, id, queryBuilder) // all basic functions already with wrapped error
 }
 
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) updateBasic(ctx context.Context, updateDto UpdateDtoType, id uuid.UUID, queryBuilder interfaces.IQueryBuilder) error {
@@ -199,7 +195,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) upda
 	}
 	err = g.repository.Update(ctx, entity)
 	if err != nil {
-		return errors.Internal.Wrap(err, "repository failed to update entity")
+		return errors.Internal.Wrap(err, "failed to update entity in repository")
 	}
 	return nil
 }
@@ -214,11 +210,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) upda
 func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Update(ctx context.Context, updateDto UpdateDtoType, id uuid.UUID) error {
 	queryBuilder := g.repository.NewQueryBuilder(ctx)
 	g.excludeDeleted(queryBuilder)
-	err := g.updateBasic(ctx, updateDto, id, queryBuilder)
-	if err != nil {
-		return errors.Internal.Wrap(err, "update entity error")
-	}
-	return nil
+	return g.updateBasic(ctx, updateDto, id, queryBuilder)
 }
 
 //Create add new entity
@@ -263,7 +255,7 @@ func (g *GenericService[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Dele
 
 	err = g.repository.Update(ctx, entity)
 	if err != nil {
-		return errors.Internal.Wrap(err, "repository failed to update entity")
+		return errors.Internal.Wrap(err, "failed to update entity in the repository")
 	}
 	return nil
 }

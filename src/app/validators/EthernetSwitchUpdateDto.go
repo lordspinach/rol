@@ -42,7 +42,7 @@ func ValidateEthernetSwitchUpdateDto(dto dtos.EthernetSwitchUpdateDto) error {
 			validation.By(trimValidation),
 		}...))
 	if validationErr != nil {
-		err = errors.Validation.New("validation error")
+		err = errors.Validation.New(errors.ValidationErrorMessage)
 		for key, value := range validationErr.(validation.Errors) {
 			err = errors.AddErrorContext(err, key, value.Error())
 		}
