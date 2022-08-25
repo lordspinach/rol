@@ -16,6 +16,7 @@ require (
 )
 
 require (
+	github.com/Azure/go-asynctask v1.1.1 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
