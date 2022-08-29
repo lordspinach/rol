@@ -53,6 +53,7 @@ func main() {
 			infrastructure.NewDeviceTemplateStorage,
 			infrastructure.NewYamlHostNetworkConfigStorage,
 			infrastructure.NewHostNetworkManager,
+			infrastructure.NewEthernetSwitchVLANRepository,
 			// Application logic
 			services.NewEthernetSwitchService,
 			services.NewHTTPLogService,
@@ -68,6 +69,7 @@ func main() {
 			controllers.NewEthernetSwitchPortGinController,
 			controllers.NewDeviceTemplateController,
 			controllers.NewHostNetworkVlanController,
+			controllers.NewEthernetSwitchVLANGinController,
 		),
 		fx.Invoke(
 			//Register logrus hooks
@@ -81,6 +83,7 @@ func main() {
 			controllers.RegisterEthernetSwitchPortController,
 			controllers.RegisterDeviceTemplateController,
 			controllers.RegisterHostNetworkVlanController,
+			controllers.RegisterEthernetSwitchVLANGinController,
 			//Start GIN http server
 			webapi.StartHTTPServer,
 		),
