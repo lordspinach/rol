@@ -7,6 +7,7 @@ import (
 	"rol/app/services"
 	"rol/dtos"
 	"rol/webapi"
+	"strconv"
 )
 
 //EthernetSwitchVLANGinController ethernet switch GIN controller constructor
@@ -82,14 +83,14 @@ func (e *EthernetSwitchVLANGinController) GetList(ctx *gin.Context) {
 // @Accept  json
 // @Produce json
 // @param	id		path		string		true	"Ethernet switch ID"
-// @param	vlanID	path		string		true	"Ethernet switch VLAN ID"
+// @param	vlanID	path		int		true	"Ethernet switch VLAN ID"
 // @Success 200 	{object} 	dtos.EthernetSwitchVLANDto
 // @Failure	404		"Not Found"
 // @Failure	500		"Internal Server Error"
 // @router /ethernet-switch/{id}/vlan/{vlanID} [get]
 func (e *EthernetSwitchVLANGinController) GetByID(ctx *gin.Context) {
 	strID := ctx.Param("vlanID")
-	id, err := uuid.Parse(strID)
+	id, err := strconv.Atoi(strID)
 	if err != nil {
 		abortWithStatusByErrorType(ctx, err)
 		return
@@ -142,7 +143,7 @@ func (e *EthernetSwitchVLANGinController) Create(ctx *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @param id path string true "Ethernet switch ID"
-// @param vlanID path string true "Ethernet switch ID"
+// @param vlanID path int true "Ethernet switch ID"
 // @Param request body dtos.EthernetSwitchVLANUpdateDto true "Ethernet switch fields"
 // @Success 200 {object} dtos.EthernetSwitchVLANDto
 // @Failure		400		{object}	dtos.ValidationErrorDto
@@ -160,7 +161,8 @@ func (e *EthernetSwitchVLANGinController) Update(ctx *gin.Context) {
 		abortWithStatusByErrorType(ctx, err)
 		return
 	}
-	vlanID, err := parseUUIDParam(ctx, "vlanID")
+	strID := ctx.Param("vlanID")
+	vlanID, err := strconv.Atoi(strID)
 	if err != nil {
 		abortWithStatusByErrorType(ctx, err)
 		return
