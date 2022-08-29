@@ -13,4 +13,6 @@ type EthernetSwitchPort struct {
 	//POEType - switch port POE type
 	//can be: "poe", "poe+", "passive24", "none"
 	POEType string
+	//PVID - port PVID
+	PVID int `gorm:"column:pvid"`
 }
