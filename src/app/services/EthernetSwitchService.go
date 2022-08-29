@@ -9,6 +9,7 @@ import (
 	"rol/app/validators"
 	"rol/domain"
 	"rol/dtos"
+	"rol/environment"
 )
 
 //EthernetSwitchService service structure for EthernetSwitch entity
@@ -41,7 +42,6 @@ func EthernetSwitchServiceInit(service *EthernetSwitchService) error {
 }
 
 func (e *EthernetSwitchService) initSupportedList() {
-
 	//Ubiquity UniFi Switch US-24-250W
 	ubiquityUnifiSwitchUs24250W := domain.EthernetSwitchModel{
 		Model:        "UniFi Switch US-24-250W",
@@ -49,6 +49,16 @@ func (e *EthernetSwitchService) initSupportedList() {
 		Code:         "unifi_switch_us-24-250w",
 	}
 	*e.supportedList = append(*e.supportedList, ubiquityUnifiSwitchUs24250W)
+
+	if environment.IsDebug {
+		//test switch model
+		testSwitch := domain.EthernetSwitchModel{
+			Model:        "Test Switch Model",
+			Manufacturer: "Test",
+			Code:         "test_switch_model",
+		}
+		*e.supportedList = append(*e.supportedList, testSwitch)
+	}
 }
 
 func (e *EthernetSwitchService) modelIsSupported(model string) bool {
