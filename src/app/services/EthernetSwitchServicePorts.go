@@ -180,9 +180,52 @@ func (e *EthernetSwitchService) DeletePort(ctx context.Context, switchID, id uui
 	if err != nil {
 		return err
 	}
+	err = e.removePortFromVLANs(ctx, switchID, id)
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed to remove port from VLANs")
+	}
 	err = e.portRepo.Delete(ctx, id)
 	if err != nil {
 		return errors.Internal.Wrap(err, "failed to delete port")
+	}
+	return nil
+}
+
+func (e *EthernetSwitchService) removePortFromUUIDSlice(slice []uuid.UUID, portID uuid.UUID) []uuid.UUID {
+	for index, item := range slice {
+		if item == portID {
+			slice[index] = slice[len(slice)-1]
+			return slice[:len(slice)-1]
+		}
+	}
+	return slice
+}
+
+func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchID, portID uuid.UUID) error {
+	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
+	queryBuilder.Where("EthernetSwitchID", "==", switchID)
+	count, err := e.vlanRepo.Count(ctx, queryBuilder)
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed to count VLANs")
+	}
+	VLANs, err := e.GetVLANs(ctx, switchID, portID.String(), "", "", 1, int(count))
+	for _, vlan := range VLANs.Items {
+		tPorts := e.removePortFromUUIDSlice(vlan.TaggedPorts, portID)
+		uPorts := e.removePortFromUUIDSlice(vlan.UntaggedPorts, portID)
+		if len(tPorts) == 0 {
+			tPorts = nil
+		}
+		if len(uPorts) == 0 {
+			uPorts = nil
+		}
+		updDto := dtos.EthernetSwitchVLANUpdateDto{EthernetSwitchVLANBaseDto: dtos.EthernetSwitchVLANBaseDto{
+			UntaggedPorts: uPorts,
+			TaggedPorts:   tPorts,
+		}}
+		_, err = Update[dtos.EthernetSwitchVLANDto, dtos.EthernetSwitchVLANUpdateDto, domain.EthernetSwitchVLAN](ctx, e.vlanRepo, updDto, vlan.ID, nil)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
