@@ -29,10 +29,10 @@ func uuidsStringToSlice(IDs string) (out []uuid.UUID) {
 //	entity - dest ethernet switch port entity
 func MapEthernetSwitchVLANCreateDto(dto dtos.EthernetSwitchVLANCreateDto, entity *domain.EthernetSwitchVLAN) {
 	entity.VlanID = dto.VlanID
-	if dto.TaggedPorts != nil {
+	if dto.TaggedPorts != nil && len(dto.TaggedPorts) > 0 {
 		entity.TaggedPorts = uuidSliceToString(dto.TaggedPorts)
 	}
-	if dto.UntaggedPorts != nil {
+	if dto.UntaggedPorts != nil && len(dto.UntaggedPorts) > 0 {
 		entity.UntaggedPorts = uuidSliceToString(dto.UntaggedPorts)
 	}
 }
@@ -42,11 +42,15 @@ func MapEthernetSwitchVLANCreateDto(dto dtos.EthernetSwitchVLANCreateDto, entity
 //	dto - ethernet switch port update dto
 //	entity - dest ethernet switch port entity
 func MapEthernetSwitchVLANUpdateDto(dto dtos.EthernetSwitchVLANUpdateDto, entity *domain.EthernetSwitchVLAN) {
-	if dto.TaggedPorts != nil {
+	if dto.TaggedPorts != nil && len(dto.TaggedPorts) > 0 {
 		entity.TaggedPorts = uuidSliceToString(dto.TaggedPorts)
+	} else {
+		entity.TaggedPorts = ""
 	}
-	if dto.UntaggedPorts != nil {
+	if dto.UntaggedPorts != nil && len(dto.UntaggedPorts) > 0 {
 		entity.UntaggedPorts = uuidSliceToString(dto.UntaggedPorts)
+	} else {
+		entity.UntaggedPorts = ""
 	}
 }
 
@@ -62,8 +66,12 @@ func MapEthernetSwitchVLANToDto(entity domain.EthernetSwitchVLAN, dto *dtos.Ethe
 	dto.EthernetSwitchID = entity.EthernetSwitchID
 	if entity.TaggedPorts != "" {
 		dto.TaggedPorts = uuidsStringToSlice(entity.TaggedPorts)
+	} else {
+		dto.TaggedPorts = []uuid.UUID{}
 	}
 	if entity.UntaggedPorts != "" {
 		dto.UntaggedPorts = uuidsStringToSlice(entity.UntaggedPorts)
+	} else {
+		dto.UntaggedPorts = []uuid.UUID{}
 	}
 }
