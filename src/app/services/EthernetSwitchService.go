@@ -16,6 +16,7 @@ import (
 type EthernetSwitchService struct {
 	switchRepo    interfaces.IGenericRepository[domain.EthernetSwitch]
 	portRepo      interfaces.IGenericRepository[domain.EthernetSwitchPort]
+	vlanRepo      interfaces.IGenericRepository[domain.EthernetSwitchVLAN]
 	supportedList *[]domain.EthernetSwitchModel
 }
 
@@ -26,10 +27,12 @@ type EthernetSwitchService struct {
 //Return
 //	New ethernet switch service
 func NewEthernetSwitchService(switchRepo interfaces.IGenericRepository[domain.EthernetSwitch],
-	portRepo interfaces.IGenericRepository[domain.EthernetSwitchPort]) (*EthernetSwitchService, error) {
+	portRepo interfaces.IGenericRepository[domain.EthernetSwitchPort],
+	vlanRepo interfaces.IGenericRepository[domain.EthernetSwitchVLAN]) (*EthernetSwitchService, error) {
 	ethernetSwitchService := &EthernetSwitchService{
 		switchRepo:    switchRepo,
 		portRepo:      portRepo,
+		vlanRepo:      vlanRepo,
 		supportedList: &[]domain.EthernetSwitchModel{},
 	}
 	return ethernetSwitchService, nil
@@ -212,7 +215,11 @@ func (e *EthernetSwitchService) Create(ctx context.Context, createDto dtos.Ether
 //Return
 //	error - if an error occurs, otherwise nil
 func (e *EthernetSwitchService) Delete(ctx context.Context, id uuid.UUID) error {
-	err := e.deleteAllPortsBySwitchID(ctx, id)
+	err := e.deleteAllVLANsBySwitchID(ctx, id)
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed to remove switch VLANs")
+	}
+	err = e.deleteAllPortsBySwitchID(ctx, id)
 	if err != nil {
 		return errors.Internal.Wrap(err, "failed to remove switch ports")
 	}
