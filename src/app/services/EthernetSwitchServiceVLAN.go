@@ -16,6 +16,10 @@ const (
 	ErrorGetSwitch = "repository failed to get ethernet switch"
 	//ErrorSwitchExistence error when checking the existence of the switch
 	ErrorSwitchExistence = "error when checking the existence of the switch"
+	//ErrorPortExistence error when checking the existence of the switch port
+	ErrorPortExistence = "error when checking the existence of the switch port"
+	//ErrorVlanOnNonexistentPort error when checking the existence of the switch port
+	ErrorVlanOnNonexistentPort = "can't create a vlan on a port that doesn't exist"
 	//ErrorSwitchNotFound switch is not found error
 	ErrorSwitchNotFound = "switch is not found"
 	//ErrorGetPortByID get port by id failed
@@ -122,6 +126,14 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 		err = errors.Validation.New(errors.ValidationErrorMessage)
 		return dto, errors.AddErrorContext(err, "VlanID", "vlan with this id already exist")
 	}
+	portsExist, err := e.dtoPortsExist(ctx, switchID, createDto.EthernetSwitchVLANBaseDto)
+	if err != nil {
+		return dto, err //we already wrap error
+	}
+	if !portsExist {
+		return dto, err //we already wrap error
+	}
+
 	entity := new(domain.EthernetSwitchVLAN)
 	err = mappers.MapDtoToEntity(createDto, entity)
 	entity.EthernetSwitchID = switchID
@@ -195,7 +207,13 @@ func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID, id uui
 	if !switchExist {
 		return dto, errors.NotFound.New(ErrorSwitchNotFound)
 	}
-
+	portsExist, err := e.dtoPortsExist(ctx, switchID, updateDto.EthernetSwitchVLANBaseDto)
+	if err != nil {
+		return dto, err //we already wrap error
+	}
+	if !portsExist {
+		return dto, err //we already wrap error
+	}
 	VLAN, err := e.GetVLANByID(ctx, switchID, id)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "get VLAN by id failed")
@@ -206,14 +224,10 @@ func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID, id uui
 		return dto, errors.Internal.Wrap(err, ErrorGetSwitch)
 	}
 	switchManager := GetEthernetSwitchManager(ethernetSwitch)
-	//if switchManager != nil {
-	//TODO: warning message log that switch manager is nil
 	err = e.updateVLANsOnPort(ctx, VLAN, updateDto, switchManager)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "update VLANs on port failed")
 	}
-	//}
-
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "==", switchID)
 	return Update[dtos.EthernetSwitchVLANDto, dtos.EthernetSwitchVLANUpdateDto, domain.EthernetSwitchVLAN](ctx, e.vlanRepo, updateDto, VLAN.ID, queryBuilder)

@@ -213,3 +213,36 @@ func (e *EthernetSwitchService) deleteAllPortsBySwitchID(ctx context.Context, sw
 	}
 	return nil
 }
+
+func (e *EthernetSwitchService) portExist(ctx context.Context, switchID, portId uuid.UUID) (bool, error) {
+	_, err := e.GetPortByID(ctx, switchID, portId)
+	if err != nil {
+		if !errors.As(err, errors.NotFound) {
+			return false, errors.Internal.Wrap(err, "repository failed to get ethernet switch")
+		}
+		return false, nil
+	}
+	return true, nil
+}
+
+func (e *EthernetSwitchService) dtoPortsExist(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) (bool, error) {
+	for _, tPort := range dto.TaggedPorts {
+		portExist, err := e.portExist(ctx, switchID, tPort)
+		if err != nil {
+			return false, errors.Internal.Wrap(err, ErrorPortExistence)
+		}
+		if !portExist {
+			return false, errors.Validation.New(ErrorVlanOnNonexistentPort)
+		}
+	}
+	for _, uPort := range dto.UntaggedPorts {
+		portExist, err := e.portExist(ctx, switchID, uPort)
+		if err != nil {
+			return false, errors.Internal.Wrap(err, ErrorPortExistence)
+		}
+		if !portExist {
+			return false, errors.Validation.New(ErrorVlanOnNonexistentPort)
+		}
+	}
+	return true, nil
+}
