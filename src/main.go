@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"rol/app/services"
 	"rol/domain"
+	"rol/environment"
 	"rol/infrastructure"
 	"rol/webapi"
 	"rol/webapi/controllers"
-
 	_ "rol/webapi/swagger"
 
 	"go.uber.org/fx"
@@ -70,6 +70,8 @@ func main() {
 			controllers.NewHostNetworkVlanController,
 		),
 		fx.Invoke(
+			//Environment
+			environment.GetEnvVariables,
 			//Register logrus hooks
 			infrastructure.RegisterLogHooks,
 			//Services initialization
