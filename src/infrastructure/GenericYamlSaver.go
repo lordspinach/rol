@@ -28,7 +28,6 @@ func SaveYamlFile(obj interface{}, filePath string) error {
 	if err != nil {
 		return errors.Internal.Wrap(err, "failed to save yaml file")
 	}
-
 	return nil
 }
 
