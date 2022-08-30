@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"rol/app/errors"
-	"rol/app/interfaces"
 	"rol/app/mappers"
+	"rol/app/utils"
 	"rol/app/validators"
 	"rol/domain"
 	"rol/dtos"
@@ -44,6 +44,64 @@ func (e *EthernetSwitchService) isVLANIdUnique(ctx context.Context, vlanID int, 
 	return true, nil
 }
 
+func (e *EthernetSwitchService) existenceOfRelatedEntitiesCheck(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) error {
+	switchExist, err := e.switchIsExist(ctx, switchID)
+	if err != nil {
+		return errors.Internal.Wrap(err, ErrorSwitchExistence)
+	}
+	if !switchExist {
+		return errors.NotFound.New(ErrorSwitchNotFound)
+	}
+	portsExist, err := e.dtoPortsExist(ctx, switchID, dto)
+	if err != nil {
+		return err //we already wrap error
+	}
+	if !portsExist {
+		return err //we already wrap error
+	}
+	return nil
+}
+
+func (e *EthernetSwitchService) createVlansOnSwitch(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANCreateDto) error {
+	ethernetSwitch, err := e.switchRepo.GetByID(ctx, switchID)
+	if err != nil {
+		return errors.Internal.Wrap(err, ErrorGetSwitch)
+	}
+	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	if switchManager == nil {
+		return nil
+	}
+	err = switchManager.CreateVLAN(dto.VlanID)
+	if err != nil {
+		return errors.Internal.Wrap(err, "create VLAN on switch failed")
+	}
+	for _, taggedPortID := range dto.TaggedPorts {
+		switchPort, err := e.portRepo.GetByID(ctx, taggedPortID)
+		if err != nil {
+			return errors.Internal.Wrap(err, ErrorGetPortByID)
+		}
+		err = switchManager.AddTaggedVLANOnPort(switchPort.Name, dto.VlanID)
+		if err != nil {
+			return errors.Internal.Wrap(err, ErrorAddTaggedVLAN)
+		}
+	}
+	for _, untaggedPortID := range dto.UntaggedPorts {
+		switchPort, err := e.portRepo.GetByID(ctx, untaggedPortID)
+		if err != nil {
+			return errors.Internal.Wrap(err, ErrorGetPortByID)
+		}
+		err = switchManager.AddUntaggedVLANOnPort(switchPort.Name, dto.VlanID)
+		if err != nil {
+			return errors.Internal.Wrap(err, ErrorAddTaggedVLAN)
+		}
+	}
+	err = switchManager.SaveConfig()
+	if err != nil {
+		return errors.Internal.Wrap(err, "save switch config failed")
+	}
+	return nil
+}
+
 //GetVLANByID Get ethernet switch VLAN by switch ID and VLAN ID
 //
 //Params
@@ -64,7 +122,7 @@ func (e *EthernetSwitchService) GetVLANByID(ctx context.Context, switchID uuid.U
 	}
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "==", switchID).Where("VlanID", "==", vlanID)
-	vlanSlice, err := GetListExtended[dtos.EthernetSwitchVLANDto, domain.EthernetSwitchVLAN](ctx, e.vlanRepo, queryBuilder, "", "", 1, 1)
+	vlanSlice, err := GetListExtended[dtos.EthernetSwitchVLANDto](ctx, e.vlanRepo, queryBuilder, "", "", 1, 1)
 	if len(vlanSlice.Items) == 0 {
 		return dto, errors.NotFound.New("vlan not found")
 	}
@@ -101,7 +159,7 @@ func (e *EthernetSwitchService) GetVLANs(ctx context.Context, switchID uuid.UUID
 	if len(search) > 3 {
 		AddSearchInAllFields(search, e.vlanRepo, queryBuilder)
 	}
-	return GetListExtended[dtos.EthernetSwitchVLANDto, domain.EthernetSwitchVLAN](ctx, e.vlanRepo, queryBuilder, orderBy, orderDirection, page, pageSize)
+	return GetListExtended[dtos.EthernetSwitchVLANDto](ctx, e.vlanRepo, queryBuilder, orderBy, orderDirection, page, pageSize)
 }
 
 //CreateVLAN Create ethernet switch VLAN by EthernetSwitchVLANCreateDto
@@ -118,12 +176,9 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, err //we already wrap error in validators
 	}
-	switchExist, err := e.switchIsExist(ctx, switchID)
+	err = e.existenceOfRelatedEntitiesCheck(ctx, switchID, createDto.EthernetSwitchVLANBaseDto)
 	if err != nil {
-		return dto, errors.Internal.Wrap(err, ErrorSwitchExistence)
-	}
-	if !switchExist {
-		return dto, errors.NotFound.New(ErrorSwitchNotFound)
+		return dto, err
 	}
 	uniqVLANId, err := e.isVLANIdUnique(ctx, createDto.VlanID, switchID)
 	if err != nil {
@@ -133,14 +188,6 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 		err = errors.Validation.New(errors.ValidationErrorMessage)
 		return dto, errors.AddErrorContext(err, "VlanID", "vlan with this id already exist")
 	}
-	portsExist, err := e.dtoPortsExist(ctx, switchID, createDto.EthernetSwitchVLANBaseDto)
-	if err != nil {
-		return dto, err //we already wrap error
-	}
-	if !portsExist {
-		return dto, err //we already wrap error
-	}
-
 	entity := new(domain.EthernetSwitchVLAN)
 	err = mappers.MapDtoToEntity(createDto, entity)
 	entity.EthernetSwitchID = switchID
@@ -151,44 +198,12 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "repository failed to insert VLAN")
 	}
-	ethernetSwitch, err := e.switchRepo.GetByID(ctx, switchID)
+	err = e.createVlansOnSwitch(ctx, switchID, createDto)
 	if err != nil {
-		return dto, errors.Internal.Wrap(err, ErrorGetSwitch)
+		return dto, err
 	}
 	outDto := dtos.EthernetSwitchVLANDto{}
 	err = mappers.MapEntityToDto(newVLAN, &outDto)
-	switchManager := GetEthernetSwitchManager(ethernetSwitch)
-	if switchManager == nil {
-		return outDto, nil
-	}
-	err = switchManager.CreateVLAN(createDto.VlanID)
-	if err != nil {
-		return dto, errors.Internal.Wrap(err, "create VLAN on switch failed")
-	}
-	for _, taggedPortID := range createDto.TaggedPorts {
-		switchPort, err := e.portRepo.GetByID(ctx, taggedPortID)
-		if err != nil {
-			return dto, errors.Internal.Wrap(err, ErrorGetPortByID)
-		}
-		err = switchManager.AddTaggedVLANOnPort(switchPort.Name, createDto.VlanID)
-		if err != nil {
-			return dto, errors.Internal.Wrap(err, ErrorAddTaggedVLAN)
-		}
-	}
-	for _, untaggedPortID := range createDto.UntaggedPorts {
-		switchPort, err := e.portRepo.GetByID(ctx, untaggedPortID)
-		if err != nil {
-			return dto, errors.Internal.Wrap(err, ErrorGetPortByID)
-		}
-		err = switchManager.AddUntaggedVLANOnPort(switchPort.Name, createDto.VlanID)
-		if err != nil {
-			return dto, errors.Internal.Wrap(err, ErrorAddTaggedVLAN)
-		}
-	}
-	err = switchManager.SaveConfig()
-	if err != nil {
-		return dto, errors.Internal.Wrap(err, "save switch config failed")
-	}
 	return outDto, nil
 }
 
@@ -207,37 +222,21 @@ func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, err //we already wrap error in validators
 	}
-	switchExist, err := e.switchIsExist(ctx, switchID)
+	err = e.existenceOfRelatedEntitiesCheck(ctx, switchID, updateDto.EthernetSwitchVLANBaseDto)
 	if err != nil {
-		return dto, errors.Internal.Wrap(err, ErrorSwitchExistence)
-	}
-	if !switchExist {
-		return dto, errors.NotFound.New(ErrorSwitchNotFound)
-	}
-	portsExist, err := e.dtoPortsExist(ctx, switchID, updateDto.EthernetSwitchVLANBaseDto)
-	if err != nil {
-		return dto, err //we already wrap error
-	}
-	if !portsExist {
-		return dto, err //we already wrap error
+		return dto, err
 	}
 	VLAN, err := e.GetVLANByID(ctx, switchID, vlanID)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "get VLAN by id failed")
 	}
-
-	ethernetSwitch, err := e.switchRepo.GetByIDExtended(ctx, switchID, nil)
-	if err != nil {
-		return dto, errors.Internal.Wrap(err, ErrorGetSwitch)
-	}
-	switchManager := GetEthernetSwitchManager(ethernetSwitch)
-	err = e.updateVLANsOnPort(ctx, VLAN, updateDto, switchManager)
+	err = e.updateVLANsOnPort(ctx, VLAN, updateDto, switchID)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "update VLANs on port failed")
 	}
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "==", switchID)
-	return Update[dtos.EthernetSwitchVLANDto, dtos.EthernetSwitchVLANUpdateDto, domain.EthernetSwitchVLAN](ctx, e.vlanRepo, updateDto, VLAN.ID, queryBuilder)
+	return Update[dtos.EthernetSwitchVLANDto](ctx, e.vlanRepo, updateDto, VLAN.ID, queryBuilder)
 }
 
 //DeleteVLAN mark ethernet switch VLAN as deleted
@@ -257,77 +256,58 @@ func (e *EthernetSwitchService) DeleteVLAN(ctx context.Context, switchID, id uui
 	}
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "==", switchID)
-	//entity, err := e.repository.GetByIDExtended(ctx, id, queryBuilder)
-	//if err != nil {
-	//	return errors.Internal.Wrap(err, "failed to get by id")
-	//}
-	//if entity == nil {
-	//	return errors.NotFound.New("ethernet switch port is not exist")
-	//}
 	return e.vlanRepo.Delete(ctx, id)
 }
 
-func (e *EthernetSwitchService) updateVLANsOnPort(ctx context.Context, VLAN dtos.EthernetSwitchVLANDto, updateDto dtos.EthernetSwitchVLANUpdateDto, switchManager interfaces.IEthernetSwitchManager) error {
-	diffTaggedToRemove := e.getDifference(VLAN.TaggedPorts, updateDto.TaggedPorts)
-	if len(updateDto.TaggedPorts) == 0 {
-		for _, tPort := range VLAN.TaggedPorts {
-			diffTaggedToRemove = append(diffTaggedToRemove, tPort)
-		}
+func (e *EthernetSwitchService) updateVLANsOnPort(ctx context.Context, VLAN dtos.EthernetSwitchVLANDto, updateDto dtos.EthernetSwitchVLANUpdateDto, switchID uuid.UUID) error {
+	ethernetSwitch, err := e.switchRepo.GetByIDExtended(ctx, switchID, nil)
+	if err != nil {
+		return errors.Internal.Wrap(err, ErrorGetSwitch)
 	}
+	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	if switchManager == nil {
+		return nil
+	}
+	diffTaggedToRemove, diffTaggedToAdd := utils.SliceDiffElements[uuid.UUID](VLAN.TaggedPorts, updateDto.TaggedPorts)
 	for _, id := range diffTaggedToRemove {
 		switchPort, err := e.portRepo.GetByID(ctx, id)
 		if err != nil {
 			return errors.Internal.Wrap(err, ErrorGetPortByID)
 		}
-		if switchManager != nil {
-			err = switchManager.RemoveVLANFromPort(switchPort.Name, VLAN.VlanID)
-			if err != nil {
-				return errors.Internal.Wrap(err, ErrorRemoveVLAN)
-			}
+		err = switchManager.RemoveVLANFromPort(switchPort.Name, VLAN.VlanID)
+		if err != nil {
+			return errors.Internal.Wrap(err, ErrorRemoveVLAN)
 		}
 	}
-	diffTaggedToAdd := e.getDifference(updateDto.TaggedPorts, VLAN.TaggedPorts)
 	for _, id := range diffTaggedToAdd {
 		switchPort, err := e.portRepo.GetByID(ctx, id)
 		if err != nil {
 			return errors.Internal.Wrap(err, ErrorGetPortByID)
 		}
-		if switchManager != nil {
-			err = switchManager.AddTaggedVLANOnPort(switchPort.Name, VLAN.VlanID)
-			if err != nil {
-				return errors.Internal.Wrap(err, "failed to add tagged VLAN on port")
-			}
+		err = switchManager.AddTaggedVLANOnPort(switchPort.Name, VLAN.VlanID)
+		if err != nil {
+			return errors.Internal.Wrap(err, "failed to add tagged VLAN on port")
 		}
 	}
-	diffUntaggedToRemove := e.getDifference(VLAN.UntaggedPorts, updateDto.UntaggedPorts)
-	if len(updateDto.UntaggedPorts) == 0 {
-		for _, uPort := range VLAN.UntaggedPorts {
-			diffTaggedToRemove = append(diffTaggedToRemove, uPort)
-		}
-	}
+	diffUntaggedToRemove, diffUntaggedToAdd := utils.SliceDiffElements[uuid.UUID](VLAN.UntaggedPorts, updateDto.UntaggedPorts)
 	for _, id := range diffUntaggedToRemove {
 		switchPort, err := e.portRepo.GetByID(ctx, id)
 		if err != nil {
 			return errors.Internal.Wrap(err, ErrorGetPortByID)
 		}
-		if switchManager != nil {
-			err = switchManager.RemoveVLANFromPort(switchPort.Name, VLAN.VlanID)
-			if err != nil {
-				return errors.Internal.Wrap(err, ErrorRemoveVLAN)
-			}
+		err = switchManager.RemoveVLANFromPort(switchPort.Name, VLAN.VlanID)
+		if err != nil {
+			return errors.Internal.Wrap(err, ErrorRemoveVLAN)
 		}
 	}
-	diffUntaggedToAdd := e.getDifference(VLAN.UntaggedPorts, updateDto.UntaggedPorts)
 	for _, id := range diffUntaggedToAdd {
 		switchPort, err := e.portRepo.GetByID(ctx, id)
 		if err != nil {
 			return errors.Internal.Wrap(err, ErrorGetPortByID)
 		}
-		if switchManager != nil {
-			err = switchManager.AddUntaggedVLANOnPort(switchPort.Name, VLAN.VlanID)
-			if err != nil {
-				return errors.Internal.Wrap(err, "failed to add untagged VLAN on port")
-			}
+		err = switchManager.AddUntaggedVLANOnPort(switchPort.Name, VLAN.VlanID)
+		if err != nil {
+			return errors.Internal.Wrap(err, "failed to add untagged VLAN on port")
 		}
 	}
 	return nil

@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"rol/app/errors"
 	"rol/app/mappers"
+	"rol/app/utils"
 	"rol/app/validators"
 	"rol/domain"
 	"rol/dtos"
@@ -191,16 +192,6 @@ func (e *EthernetSwitchService) DeletePort(ctx context.Context, switchID, id uui
 	return nil
 }
 
-func (e *EthernetSwitchService) removePortFromUUIDSlice(slice []uuid.UUID, portID uuid.UUID) []uuid.UUID {
-	for index, item := range slice {
-		if item == portID {
-			slice[index] = slice[len(slice)-1]
-			return slice[:len(slice)-1]
-		}
-	}
-	return slice
-}
-
 func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchID, portID uuid.UUID) error {
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "==", switchID)
@@ -210,8 +201,8 @@ func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchI
 	}
 	VLANs, err := e.GetVLANs(ctx, switchID, portID.String(), "", "", 1, int(count))
 	for _, vlan := range VLANs.Items {
-		tPorts := e.removePortFromUUIDSlice(vlan.TaggedPorts, portID)
-		uPorts := e.removePortFromUUIDSlice(vlan.UntaggedPorts, portID)
+		tPorts := utils.RemoveElementFromSlice[uuid.UUID](vlan.TaggedPorts, portID)
+		uPorts := utils.RemoveElementFromSlice[uuid.UUID](vlan.UntaggedPorts, portID)
 		if len(tPorts) == 0 {
 			tPorts = nil
 		}
@@ -222,7 +213,7 @@ func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchI
 			UntaggedPorts: uPorts,
 			TaggedPorts:   tPorts,
 		}}
-		_, err = Update[dtos.EthernetSwitchVLANDto, dtos.EthernetSwitchVLANUpdateDto, domain.EthernetSwitchVLAN](ctx, e.vlanRepo, updDto, vlan.ID, nil)
+		_, err = Update[dtos.EthernetSwitchVLANDto](ctx, e.vlanRepo, updDto, vlan.ID, nil)
 		if err != nil {
 			return err
 		}
@@ -275,7 +266,9 @@ func (e *EthernetSwitchService) dtoPortsExist(ctx context.Context, switchID uuid
 			return false, errors.Internal.Wrap(err, ErrorPortExistence)
 		}
 		if !portExist {
-			return false, errors.Validation.New(ErrorVlanOnNonexistentPort)
+			err = errors.Validation.New(errors.ValidationErrorMessage)
+			err = errors.AddErrorContext(err, "TaggedPorts", ErrorVlanOnNonexistentPort)
+			return false, err
 		}
 	}
 	for _, uPort := range dto.UntaggedPorts {
@@ -284,7 +277,9 @@ func (e *EthernetSwitchService) dtoPortsExist(ctx context.Context, switchID uuid
 			return false, errors.Internal.Wrap(err, ErrorPortExistence)
 		}
 		if !portExist {
-			return false, errors.Validation.New(ErrorVlanOnNonexistentPort)
+			err = errors.Validation.New(errors.ValidationErrorMessage)
+			err = errors.AddErrorContext(err, "UntaggedPorts", ErrorVlanOnNonexistentPort)
+			return false, err
 		}
 	}
 	return true, nil
