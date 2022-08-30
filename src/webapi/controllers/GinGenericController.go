@@ -86,7 +86,7 @@ func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]
 //Return
 //	Returns http status code and response dto
 func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Create(ctx *gin.Context) {
-	reqDto, err := getRequestDtoAndRestoreBody[CreateDtoType](ctx)
+	reqDto, err := getRequestDto[CreateDtoType](ctx)
 	if err != nil {
 		abortWithStatusByErrorType(ctx, err)
 		return
@@ -102,7 +102,7 @@ func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]
 //Return
 //	Returns http status code and response dto
 func (g *GinGenericController[DtoType, CreateDtoType, UpdateDtoType, EntityType]) Update(ctx *gin.Context) {
-	reqDto, err := getRequestDtoAndRestoreBody[UpdateDtoType](ctx)
+	reqDto, err := getRequestDto[UpdateDtoType](ctx)
 	if err != nil {
 		abortWithStatusByErrorType(ctx, err)
 		return
