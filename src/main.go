@@ -58,7 +58,7 @@ func main() {
 			services.NewHTTPLogService,
 			services.NewAppLogService,
 			services.NewDeviceTemplateService,
-			services.NewHostNetworkVlanService,
+			services.NewHostNetworkService,
 			// WEB API -> GIN Server
 			webapi.NewGinHTTPServer,
 			// WEB API -> GIN Controllers
@@ -68,6 +68,7 @@ func main() {
 			controllers.NewEthernetSwitchPortGinController,
 			controllers.NewDeviceTemplateController,
 			controllers.NewHostNetworkVlanController,
+			controllers.NewHostNetworkBridgeController,
 		),
 		fx.Invoke(
 			//Register logrus hooks
@@ -81,6 +82,7 @@ func main() {
 			controllers.RegisterEthernetSwitchPortController,
 			controllers.RegisterDeviceTemplateController,
 			controllers.RegisterHostNetworkVlanController,
+			controllers.RegisterHostNetworkBridgeController,
 			//Start GIN http server
 			webapi.StartHTTPServer,
 		),
