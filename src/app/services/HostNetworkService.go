@@ -12,32 +12,34 @@ import (
 )
 
 const vlanNotFound = "vlan is not exist on the host"
-const masterNotFound = "master interface is not exist on the host"
+const bridgeNotFound = "bridge is not exist on the host"
+const parentNotFound = "parent interface is not exist on the host"
+const slaveNotFound = "slave interface is not exist on the host"
 const setAddressesFailed = "set addresses to the vlan fail"
 
-//HostNetworkVlanService is a struct for host network vlan service
-type HostNetworkVlanService struct {
+//HostNetworkService is a struct for host network vlan service
+type HostNetworkService struct {
 	manager interfaces.IHostNetworkManager
 }
 
-//NewHostNetworkVlanService is a constructor for HostNetworkVlanService
+//NewHostNetworkService is a constructor for HostNetworkService
 //
 //Params:
 //	manager - host network manager
 //Return:
-//	HostNetworkVlanService - instance of network vlan service
-func NewHostNetworkVlanService(manager interfaces.IHostNetworkManager) *HostNetworkVlanService {
-	return &HostNetworkVlanService{
+//	HostNetworkService - instance of network vlan service
+func NewHostNetworkService(manager interfaces.IHostNetworkManager) *HostNetworkService {
+	return &HostNetworkService{
 		manager: manager,
 	}
 }
 
-//GetList gets list of host vlans
+//GetVlanList gets list of host vlans
 //
 //Return:
 //	[]dtos.HostNetworkVlanDto - slice of vlan dtos
 //	error - if an error occurs, otherwise nil
-func (h *HostNetworkVlanService) GetList() ([]dtos.HostNetworkVlanDto, error) {
+func (h *HostNetworkService) GetVlanList() ([]dtos.HostNetworkVlanDto, error) {
 	out := []dtos.HostNetworkVlanDto{}
 	links, err := h.manager.GetList()
 	if err != nil {
@@ -56,14 +58,14 @@ func (h *HostNetworkVlanService) GetList() ([]dtos.HostNetworkVlanDto, error) {
 	return out, nil
 }
 
-//GetByName gets vlan by name
+//GetVlanByName gets vlan by name
 //
 //Params:
 //	vlanName - name of the vlan
 //Return:
 //	dtos.HostNetworkVlanDto - vlan dto
 //	error - if an error occurs, otherwise nil
-func (h *HostNetworkVlanService) GetByName(vlanName string) (dtos.HostNetworkVlanDto, error) {
+func (h *HostNetworkService) GetVlanByName(vlanName string) (dtos.HostNetworkVlanDto, error) {
 	link, err := h.manager.GetByName(vlanName)
 	if err != nil {
 		return dtos.HostNetworkVlanDto{}, errors.Internal.Wrap(err, "error getting vlan by name")
@@ -79,30 +81,34 @@ func (h *HostNetworkVlanService) GetByName(vlanName string) (dtos.HostNetworkVla
 	return dto, nil
 }
 
-//Create new vlan on host
+//CreateVlan new vlan on host
 //
 //Params:
 //	vlan - vlan create dto
 //Return:
 //	dtos.HostNetworkVlanDto - created host network vlan
 //	error - if an error occurs, otherwise nil
-func (h *HostNetworkVlanService) Create(createDto dtos.HostNetworkVlanCreateDto) (dtos.HostNetworkVlanDto, error) {
+func (h *HostNetworkService) CreateVlan(createDto dtos.HostNetworkVlanCreateDto) (dtos.HostNetworkVlanDto, error) {
 	dto := dtos.HostNetworkVlanDto{}
 	err := validators.ValidateHostNetworkVlanCreateDto(createDto)
 	if err != nil {
 		return dto, err
 	}
-	_, err = h.manager.GetByName(createDto.Master)
+	_, err = h.manager.GetByName(createDto.Parent)
 	if err != nil {
 		if !errors.As(err, errors.NotFound) {
 			return dto, errors.Internal.Wrap(err, "failed to check existence of master vlan interface")
 		}
 		err1 := errors.Validation.New(errors.ValidationErrorMessage)
-		return dto, errors.AddErrorContext(err1, "Master", masterNotFound)
+		return dto, errors.AddErrorContext(err1, "Parent", parentNotFound)
 	}
-	vlanName, err := h.manager.CreateVlan(createDto.Master, createDto.VlanID)
+	vlanName, err := h.manager.CreateVlan(createDto.Parent, createDto.VlanID)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "error creating vlan")
+	}
+	err = h.manager.SetLinkUp(vlanName)
+	if err != nil {
+		return dto, errors.Internal.Wrap(err, "set vlan up failed")
 	}
 	link, err := h.manager.GetByName(vlanName)
 	if err != nil {
@@ -128,7 +134,7 @@ func (h *HostNetworkVlanService) Create(createDto dtos.HostNetworkVlanCreateDto)
 	return dto, nil
 }
 
-func (h *HostNetworkVlanService) syncAddresses(link interfaces.IHostNetworkLink, addresses []string) error {
+func (h *HostNetworkService) syncAddresses(link interfaces.IHostNetworkLink, addresses []string) error {
 	currAddresses := link.GetAddresses()
 	linkName := link.GetName()
 	currAddressStrSlice := []string{}
@@ -169,7 +175,7 @@ func (h *HostNetworkVlanService) syncAddresses(link interfaces.IHostNetworkLink,
 	return nil
 }
 
-//Update vlan on host
+//UpdateVlan vlan on host
 //
 //Params:
 //	vlanName - vlan name
@@ -177,7 +183,7 @@ func (h *HostNetworkVlanService) syncAddresses(link interfaces.IHostNetworkLink,
 //Return:
 //	dtos.HostNetworkVlanDto - updated host network vlan
 //	error - if an error occurs, otherwise nil
-func (h *HostNetworkVlanService) Update(vlanName string, updateDto dtos.HostNetworkVlanUpdateDto) (dtos.HostNetworkVlanDto, error) {
+func (h *HostNetworkService) UpdateVlan(vlanName string, updateDto dtos.HostNetworkVlanUpdateDto) (dtos.HostNetworkVlanDto, error) {
 	dto := dtos.HostNetworkVlanDto{}
 	err := validators.ValidateHostNetworkVlanUpdateDto(updateDto)
 	if err != nil {
@@ -206,13 +212,13 @@ func (h *HostNetworkVlanService) Update(vlanName string, updateDto dtos.HostNetw
 	return dto, nil
 }
 
-//Delete deletes vlan on host by its name
+//DeleteVlan deletes vlan on host by its name
 //
 //Params:
 //	vlanName - vlan name
 //Return
 //	error - if an error occurs, otherwise nil
-func (h *HostNetworkVlanService) Delete(vlanName string) error {
+func (h *HostNetworkService) DeleteVlan(vlanName string) error {
 	if !strings.Contains(vlanName, "rol.") {
 		return errors.NotFound.New(vlanNotFound)
 	}
