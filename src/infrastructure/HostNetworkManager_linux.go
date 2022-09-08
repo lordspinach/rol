@@ -94,6 +94,24 @@ func (h *HostNetworkManager) mapLink(link netlink.Link) (interfaces.IHostNetwork
 			Master: master,
 		}
 		return vlan, nil
+	} else if link.Type() == "bridge" {
+		addresses, err := h.parseLinkAddr(link)
+		if err != nil {
+			return nil, errors.Internal.Wrap(err, "error parsing link addresses")
+		}
+		slaves, err := h.getSlaves(link)
+		if err != nil {
+			return nil, errors.Internal.Wrap(err, "get slaves failed")
+		}
+		bridge := domain.HostNetworkBridge{
+			HostNetworkLink: domain.HostNetworkLink{
+				Name:      link.Attrs().Name,
+				Type:      link.Type(),
+				Addresses: addresses,
+			},
+			Slaves: slaves,
+		}
+		return bridge, nil
 	}
 	return domain.HostNetworkLink{Name: link.Attrs().Name, Type: "none", Addresses: []net.IPNet{}}, nil
 }
@@ -269,6 +287,8 @@ func (h *HostNetworkManager) SaveConfiguration() error {
 			config.Vlans = append(config.Vlans, inter.(domain.HostNetworkVlan))
 		} else if inter.GetType() == "device" {
 			config.Devices = append(config.Devices, inter.(domain.HostNetworkDevice))
+		} else if inter.GetType() == "bridge" {
+			config.Bridges = append(config.Bridges, inter.(domain.HostNetworkBridge))
 		}
 	}
 	err = h.configStorage.SaveConfig(config)
