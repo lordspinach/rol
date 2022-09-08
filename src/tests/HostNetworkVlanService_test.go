@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	vlanService            *services.HostNetworkVlanService
+	vlanService            *services.HostNetworkService
 	configServiceFilePath  string
 	serviceMasterInterface string
 	createdVlanName        string
@@ -30,7 +30,7 @@ func Test_HostNetworkVlanService_Prepare(t *testing.T) {
 	if err != nil {
 		t.Error("error to create host network manager")
 	}
-	vlanService = services.NewHostNetworkVlanService(networkManager)
+	vlanService = services.NewHostNetworkService(networkManager)
 
 	links, err := networkManager.GetList()
 	if err != nil {
@@ -47,13 +47,13 @@ func Test_HostNetworkVlanService_Prepare(t *testing.T) {
 func Test_HostNetworkVlanService_CreateVlan(t *testing.T) {
 	createDto := dtos.HostNetworkVlanCreateDto{
 		VlanID: 132,
-		Master: serviceMasterInterface,
+		Parent: serviceMasterInterface,
 		Addresses: []string{
 			"123.123.123.123/24",
 			"123.123.124.124/24",
 		},
 	}
-	dto, err := vlanService.Create(createDto)
+	dto, err := vlanService.CreateVlan(createDto)
 	if err != nil {
 		t.Errorf("error creating vlan: %s", err.Error())
 	}
@@ -66,12 +66,12 @@ func Test_HostNetworkVlanService_CreateVlan(t *testing.T) {
 func Test_HostNetworkVlanService_CreateVlanWithIncorrectID(t *testing.T) {
 	createDto := dtos.HostNetworkVlanCreateDto{
 		VlanID:    5000,
-		Master:    serviceMasterInterface,
+		Parent:    serviceMasterInterface,
 		Addresses: []string{},
 	}
-	dto, err := vlanService.Create(createDto)
+	dto, err := vlanService.CreateVlan(createDto)
 	if err == nil {
-		_ = vlanService.Delete(dto.Name)
+		_ = vlanService.DeleteVlan(dto.Name)
 		t.Error("successfully created vlan with incorrect vlan id")
 	}
 }
@@ -79,16 +79,16 @@ func Test_HostNetworkVlanService_CreateVlanWithIncorrectID(t *testing.T) {
 func Test_HostNetworkVlanService_CreateVlanWithIncorrectMasterName(t *testing.T) {
 	createDto := dtos.HostNetworkVlanCreateDto{
 		VlanID:    133,
-		Master:    " incorrect",
+		Parent:    " incorrect",
 		Addresses: []string{},
 	}
-	dto, err := vlanService.Create(createDto)
+	dto, err := vlanService.CreateVlan(createDto)
 	if err != nil {
 		if !errors.As(err, errors.Validation) {
 			t.Errorf("expected error is not Validation error: %s", err.Error())
 		}
 	} else {
-		_ = vlanService.Delete(dto.Name)
+		_ = vlanService.DeleteVlan(dto.Name)
 		t.Error("successfully created vlan with incorrect master interface name")
 	}
 }
@@ -96,16 +96,16 @@ func Test_HostNetworkVlanService_CreateVlanWithIncorrectMasterName(t *testing.T)
 func Test_HostNetworkVlanService_CreateVlanWithNotExistedMasterInterface(t *testing.T) {
 	createDto := dtos.HostNetworkVlanCreateDto{
 		VlanID:    133,
-		Master:    "notexisted",
+		Parent:    "notexisted",
 		Addresses: []string{},
 	}
-	dto, err := vlanService.Create(createDto)
+	dto, err := vlanService.CreateVlan(createDto)
 	if err != nil {
 		if !errors.As(err, errors.Validation) {
 			t.Errorf("expected error is not Validation error: %s", err.Error())
 		}
 	} else {
-		_ = vlanService.Delete(dto.Name)
+		_ = vlanService.DeleteVlan(dto.Name)
 		t.Error("successfully created vlan with incorrect master interface name")
 	}
 }
@@ -116,7 +116,7 @@ func Test_HostNetworkVlanService_UpdateVlan(t *testing.T) {
 			"123.123.125.125/24",
 		},
 	}
-	dto, err := vlanService.Update(createdVlanName, updateDto)
+	dto, err := vlanService.UpdateVlan(createdVlanName, updateDto)
 	if err != nil {
 		t.Errorf("error creating vlan: %s", err.Error())
 	}
@@ -137,7 +137,7 @@ func Test_HostNetworkVlanService_UpdateIncorrectAddress(t *testing.T) {
 			"123.123.125.1252/24",
 		},
 	}
-	_, err := vlanService.Update(createdVlanName, updateDto)
+	_, err := vlanService.UpdateVlan(createdVlanName, updateDto)
 	if err != nil {
 		if !errors.As(err, errors.Validation) {
 			t.Errorf("expected error is not Validation error: %s", err.Error())
@@ -148,14 +148,14 @@ func Test_HostNetworkVlanService_UpdateIncorrectAddress(t *testing.T) {
 }
 
 func Test_HostNetworkVlanService_GetByNameLo(t *testing.T) {
-	_, err := vlanService.GetByName("lo")
+	_, err := vlanService.GetVlanByName("lo")
 	if !errors.As(err, errors.NotFound) {
 		t.Errorf("unexpected behavior, expect not found error")
 	}
 }
 
 func Test_HostNetworkVlanService_GetByNameVlan(t *testing.T) {
-	vlan, err := vlanService.GetByName(createdVlanName)
+	vlan, err := vlanService.GetVlanByName(createdVlanName)
 	if err != nil {
 		t.Errorf("get vlan by name failed: %s", err.Error())
 	}
@@ -165,7 +165,7 @@ func Test_HostNetworkVlanService_GetByNameVlan(t *testing.T) {
 }
 
 func Test_HostNetworkVlanService_GetList(t *testing.T) {
-	vlans, err := vlanService.GetList()
+	vlans, err := vlanService.GetVlanList()
 	if err != nil {
 		t.Errorf("get list failed: %s", err.Error())
 	}
@@ -184,11 +184,11 @@ func Test_HostNetworkVlanService_GetList(t *testing.T) {
 }
 
 func Test_HostNetworkVlanService_Delete(t *testing.T) {
-	err := vlanService.Delete(createdVlanName)
+	err := vlanService.DeleteVlan(createdVlanName)
 	if err != nil {
 		t.Errorf("delete vlan failed: %s", err.Error())
 	}
-	_, err = vlanService.GetByName(createdVlanName)
+	_, err = vlanService.GetVlanByName(createdVlanName)
 	if err == nil {
 		t.Error("deleted vlan was received")
 	}
