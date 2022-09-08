@@ -62,17 +62,32 @@ func (h *HostNetworkManager) getParentName(link netlink.Link) (string, error) {
 	return parent.Attrs().Name, nil
 }
 
+func (h *HostNetworkManager) getSlaves(master netlink.Link) ([]string, error) {
+	out := []string{}
+	links, err := netlink.LinkList()
+	if err != nil {
+		return out, errors.Internal.Wrap(err, "error getting a list of link devices")
+	}
+	for _, link := range links {
+		if link.Attrs().MasterIndex == master.Attrs().Index {
+			out = append(out, link.Attrs().Name)
+		}
+	}
+	return out, nil
+}
+
 func (h *HostNetworkManager) mapLink(link netlink.Link) (interfaces.IHostNetworkLink, error) {
 	if link.Type() == "device" {
 		addresses, err := h.parseLinkAddr(link)
 		if err != nil {
 			return nil, errors.Internal.Wrap(err, "error parsing link addresses")
 		}
-		device := domain.HostNetworkDevice{HostNetworkLink: domain.HostNetworkLink{
-			Name:      link.Attrs().Name,
-			Type:      link.Type(),
-			Addresses: addresses,
-		}}
+		device := domain.HostNetworkDevice{
+			HostNetworkLink: domain.HostNetworkLink{
+				Name:      link.Attrs().Name,
+				Type:      link.Type(),
+				Addresses: addresses,
+			}}
 		return device, nil
 
 	} else if link.Type() == "vlan" {
@@ -193,12 +208,85 @@ func (h *HostNetworkManager) CreateVlan(master string, vlanID int) (string, erro
 
 	h.hasUnsavedChanges = true
 
-	err = netlink.LinkSetUp(vlan)
-	if err != nil {
-		return "", errors.Internal.Wrap(err, "vlan link set up failed")
-	}
-
 	return vlanName, nil
+}
+
+//CreateBridge creates bridge on host
+//
+//Params:
+//	name - new bridge name
+//Return:
+//	string - new bridge name that will be rol.br.{name}
+//	error - if an error occurs, otherwise nil
+func (h *HostNetworkManager) CreateBridge(name string) (string, error) {
+	la := netlink.NewLinkAttrs()
+	bridgeName := fmt.Sprintf("rol.br.%s", name)
+	la.Name = bridgeName
+	bridge := &netlink.Bridge{LinkAttrs: la}
+	err := netlink.LinkAdd(bridge)
+	if err != nil {
+		return "", errors.Internal.Wrap(err, "failed to add bridge link")
+	}
+	return bridgeName, nil
+}
+
+//SetLinkMaster set master for link
+//
+//Params:
+//	slaveName - name of link that will be slave
+//	masterName - name of link that will be slave
+//Return:
+//	error - if an error occurs, otherwise nil
+func (h *HostNetworkManager) SetLinkMaster(slaveName, masterName string) error {
+	slave, err := netlink.LinkByName(slaveName)
+	if err != nil {
+		return errors.Internal.Wrap(err, "getting slave by name failed")
+	}
+	master, err := netlink.LinkByName(masterName)
+	if err != nil {
+		return errors.Internal.Wrap(err, "getting master by name failed")
+	}
+	err = netlink.LinkSetMaster(slave, master)
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed set link master")
+	}
+	return nil
+}
+
+//SetLinkNoMaster removes the master of the link
+//
+//Params:
+//	linkName - name of the link
+//Return:
+//	error - if an error occurs, otherwise nil
+func (h *HostNetworkManager) SetLinkNoMaster(linkName string) error {
+	link, err := netlink.LinkByName(linkName)
+	if err != nil {
+		return errors.Internal.Wrap(err, "getting link by name failed")
+	}
+	err = netlink.LinkSetNoMaster(link)
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed to set no master for link")
+	}
+	return nil
+}
+
+//SetLinkUp enables the link
+//
+//Params:
+//	linkName - name of the link
+//Return:
+//	error - if an error occurs, otherwise nil
+func (h *HostNetworkManager) SetLinkUp(linkName string) error {
+	link, err := netlink.LinkByName(linkName)
+	if err != nil {
+		return errors.Internal.Wrap(err, "getting link by name failed")
+	}
+	err = netlink.LinkSetUp(link)
+	if err != nil {
+		return errors.Internal.Wrap(err, "link set up failed")
+	}
+	return nil
 }
 
 //DeleteLinkByName deletes interface on host by its name
@@ -281,7 +369,6 @@ func (h *HostNetworkManager) SaveConfiguration() error {
 	if err != nil {
 		return errors.Internal.Wrap(err, "failed to get list of host network interfaces")
 	}
-
 	for _, inter := range networkInterfaces {
 		if inter.GetType() == "vlan" {
 			config.Vlans = append(config.Vlans, inter.(domain.HostNetworkVlan))
@@ -297,6 +384,24 @@ func (h *HostNetworkManager) SaveConfiguration() error {
 	}
 	h.hasUnsavedChanges = false
 	return nil
+}
+
+func (h *HostNetworkManager) bridgeExistOnHost(links []interfaces.IHostNetworkLink, bridgeName string) bool {
+	for _, inter := range links {
+		if inter.GetType() == "bridge" && inter.GetName() == bridgeName {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *HostNetworkManager) bridgeExistInConfig(config domain.HostNetworkConfig, bridgeName string) bool {
+	for _, bridge := range config.Bridges {
+		if bridge.GetName() == bridgeName {
+			return true
+		}
+	}
+	return false
 }
 
 func (h *HostNetworkManager) vlanExistOnHost(links []interfaces.IHostNetworkLink, vlanName string) bool {
@@ -343,6 +448,16 @@ func (h *HostNetworkManager) addressExistInLinkConfig(config domain.HostNetworkC
 		}
 	}
 	for _, inter := range config.Devices {
+		if inter.GetName() == linkName {
+			addresses := inter.GetAddresses()
+			for _, addr := range addresses {
+				if addr.String() == address.String() {
+					return true
+				}
+			}
+		}
+	}
+	for _, inter := range config.Bridges {
 		if inter.GetName() == linkName {
 			addresses := inter.GetAddresses()
 			for _, addr := range addresses {
@@ -418,10 +533,72 @@ func (h *HostNetworkManager) loadVlanConfiguration(config domain.HostNetworkConf
 	return nil
 }
 
+func (h *HostNetworkManager) loadBridgeConfiguration(config domain.HostNetworkConfig) error {
+	hostLinks, err := h.GetList()
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed to get list of host network interfaces")
+	}
+	// Add all settings from config to bridge interfaces
+	for _, bridge := range config.Bridges {
+		//Skip all bridges that not configured by our system
+		if !strings.Contains(bridge.Name, "rol.br.") {
+			continue
+		}
+		bridgeExist := h.bridgeExistOnHost(hostLinks, bridge.Name)
+		if !bridgeExist {
+			bridgeName, err := h.CreateBridge(bridge.Name[7:])
+			if err != nil {
+				return errors.Internal.Wrap(err, "error when creating a bridge")
+			}
+			for _, addr := range bridge.Addresses {
+				err = h.AddrAdd(bridgeName, addr)
+				if err != nil {
+					return errors.Internal.Wrap(err, "failed set address to bridge")
+				}
+			}
+		} else {
+			for _, addr := range bridge.Addresses {
+				h.addressExistOnHostLink(hostLinks, bridge.GetName(), addr)
+				err = h.AddrAdd(bridge.GetName(), addr)
+				if err != nil {
+					return errors.Internal.Wrap(err, "failed set address to bridge")
+				}
+			}
+		}
+	}
+	// Remove all configurations that not exist in config
+	for _, inter := range hostLinks {
+		if !strings.Contains(inter.GetName(), "rol.br.") && inter.GetType() != "bridge" {
+			continue
+		}
+		if !h.bridgeExistInConfig(config, inter.GetName()) {
+			err := h.DeleteLinkByName(inter.GetName())
+			if err != nil {
+				return errors.Internal.Wrap(err, "delete link by name error")
+			}
+		} else if h.vlanExistInConfig(config, inter.GetName()) {
+			addresses := inter.GetAddresses()
+			for _, address := range addresses {
+				if !h.addressExistInLinkConfig(config, inter.GetName(), address) {
+					err = h.AddrDelete(inter.GetName(), address)
+					if err != nil {
+						return errors.Internal.Wrap(err, "failed delete address from vlan")
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (h *HostNetworkManager) loadConfiguration(config domain.HostNetworkConfig) error {
 	err := h.loadVlanConfiguration(config)
 	if err != nil {
 		return errors.Internal.Wrap(err, "error loading vlan configuration")
+	}
+	err = h.loadBridgeConfiguration(config)
+	if err != nil {
+		return errors.Internal.Wrap(err, "error loading bridge configuration")
 	}
 	h.hasUnsavedChanges = false
 	return nil
