@@ -44,7 +44,7 @@ func (e *EthernetSwitchService) VlanIDIsUniqueWithinTheSwitch(ctx context.Contex
 	return true, nil
 }
 
-func (e *EthernetSwitchService) existenceOfRelatedEntitiesCheck(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) error {
+func (e *EthernetSwitchService) checkExistenceOfRelatedEntities(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) error {
 	switchExist, err := e.switchIsExist(ctx, switchID)
 	if err != nil {
 		return errors.Internal.Wrap(err, ErrorSwitchExistence)
@@ -176,7 +176,7 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, err //we already wrap error in validators
 	}
-	err = e.existenceOfRelatedEntitiesCheck(ctx, switchID, createDto.EthernetSwitchVLANBaseDto)
+	err = e.checkExistenceOfRelatedEntities(ctx, switchID, createDto.EthernetSwitchVLANBaseDto)
 	if err != nil {
 		return dto, err
 	}
@@ -222,7 +222,7 @@ func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, err //we already wrap error in validators
 	}
-	err = e.existenceOfRelatedEntitiesCheck(ctx, switchID, updateDto.EthernetSwitchVLANBaseDto)
+	err = e.checkExistenceOfRelatedEntities(ctx, switchID, updateDto.EthernetSwitchVLANBaseDto)
 	if err != nil {
 		return dto, err
 	}
