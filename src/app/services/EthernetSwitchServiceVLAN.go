@@ -30,7 +30,7 @@ const (
 	ErrorRemoveVLAN = "failed to remove VLAN from port"
 )
 
-func (e *EthernetSwitchService) isVLANIdUnique(ctx context.Context, vlanID int, switchID uuid.UUID) (bool, error) {
+func (e *EthernetSwitchService) VlanIDIsUniqueWithinTheSwitch(ctx context.Context, vlanID int, switchID uuid.UUID) (bool, error) {
 	uniqueIDQueryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	uniqueIDQueryBuilder.Where("VlanID", "==", vlanID)
 	uniqueIDQueryBuilder.Where("EthernetSwitchID", "==", switchID)
@@ -180,7 +180,7 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, err
 	}
-	uniqVLANId, err := e.isVLANIdUnique(ctx, createDto.VlanID, switchID)
+	uniqVLANId, err := e.VlanIDIsUniqueWithinTheSwitch(ctx, createDto.VlanID, switchID)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "VLAN ID uniqueness check error")
 	}
