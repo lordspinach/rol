@@ -15,23 +15,26 @@ import (
 	"testing"
 )
 
-var (
-	bridgeService                  *services.HostNetworkService
-	bridgeConfigServiceFilePath    string
-	bridgeSlaveVlanName            string
-	createdBridgeName              string
-	bridgeSlaveVlanMasterInterface string
-)
+type bridgeServiceTester struct {
+	service             *services.HostNetworkService
+	configFilePath      string
+	createdBridgeName   string
+	vlanName            string
+	vlanMasterInterface string
+}
+
+var bridgeTester *bridgeServiceTester
 
 func Test_HostNetworkBridgeService_Prepare(t *testing.T) {
+	bridgeTester = &bridgeServiceTester{}
 	_, filePath, _, _ := runtime.Caller(0)
-	bridgeConfigServiceFilePath = filepath.Join(filepath.Dir(filePath), "hostNetworkConfig.yaml")
-	configStorage := infrastructure.NewYamlHostNetworkConfigStorage(domain.GlobalDIParameters{RootPath: filepath.Dir(bridgeConfigServiceFilePath)})
+	bridgeTester.configFilePath = filepath.Join(filepath.Dir(filePath), "hostNetworkConfig.yaml")
+	configStorage := infrastructure.NewYamlHostNetworkConfigStorage(domain.GlobalDIParameters{RootPath: filepath.Dir(bridgeTester.configFilePath)})
 	networkManager, err := infrastructure.NewHostNetworkManager(configStorage)
 	if err != nil {
 		t.Error("error to create host network manager")
 	}
-	bridgeService = services.NewHostNetworkService(networkManager)
+	bridgeTester.service = services.NewHostNetworkService(networkManager)
 
 	links, err := networkManager.GetList()
 	if err != nil {
@@ -39,24 +42,24 @@ func Test_HostNetworkBridgeService_Prepare(t *testing.T) {
 	}
 	for _, link := range links {
 		if link.GetName() != "lo" && link.GetType() != "vlan" {
-			bridgeSlaveVlanMasterInterface = link.GetName()
+			bridgeTester.vlanMasterInterface = link.GetName()
 			break
 		}
 	}
 
 	createDto := dtos.HostNetworkVlanCreateDto{
 		VlanID: 132,
-		Parent: bridgeSlaveVlanMasterInterface,
+		Parent: bridgeTester.vlanMasterInterface,
 		Addresses: []string{
 			"123.123.123.123/24",
 			"123.123.124.124/24",
 		},
 	}
-	dto, err := bridgeService.CreateVlan(createDto)
+	dto, err := bridgeTester.service.CreateVlan(createDto)
 	if err != nil {
 		t.Errorf("error creating vlan: %s", err.Error())
 	}
-	bridgeSlaveVlanName = dto.Name
+	bridgeTester.vlanName = dto.Name
 }
 
 func Test_HostNetworkBridgeService_CreateBridge(t *testing.T) {
@@ -70,12 +73,12 @@ func Test_HostNetworkBridgeService_CreateBridge(t *testing.T) {
 			Slaves: nil,
 		},
 	}
-	dto, err := bridgeService.CreateBridge(createDto)
+	dto, err := bridgeTester.service.CreateBridge(createDto)
 	if err != nil {
 		t.Errorf("error creating bridge: %s", err.Error())
 	}
-	createdBridgeName = dto.Name
-	if !strings.Contains(createdBridgeName, "rol.br.") {
+	bridgeTester.createdBridgeName = dto.Name
+	if !strings.Contains(bridgeTester.createdBridgeName, "rol.br.") {
 		t.Errorf("wrong bridge name: %s, expect rol.br.{%s}", dto.Name, createDto.Name)
 	}
 }
@@ -90,33 +93,16 @@ func Test_HostNetworkBridgeService_CreateBridgeWithIncorrectName(t *testing.T) {
 			Slaves: nil,
 		},
 	}
-	dto, err := bridgeService.CreateBridge(createDto)
+	dto, err := bridgeTester.service.CreateBridge(createDto)
 	if err != nil {
 		if !errors.As(err, errors.Validation) {
 			t.Errorf("expected error is not Validation error: %s", err.Error())
 		}
 	} else {
-		_ = bridgeService.DeleteBridge(dto.Name)
+		_ = bridgeTester.service.DeleteBridge(dto.Name)
 		t.Error("successfully created vlan with incorrect master interface name")
 	}
 }
-
-//func Test_HostNetworkVlanService_CreateBridgeWithNotExistedMasterInterface(t *testing.T) {
-//	createDto := dtos.HostNetworkVlanCreateDto{
-//		VlanID:    133,
-//		Parent:    "notexisted",
-//		Addresses: []string{},
-//	}
-//	dto, err := vlanService.CreateVlan(createDto)
-//	if err != nil {
-//		if !errors.As(err, errors.Validation) {
-//			t.Errorf("expected error is not Validation error: %s", err.Error())
-//		}
-//	} else {
-//		_ = vlanService.DeleteVlan(dto.Name)
-//		t.Error("successfully created vlan with incorrect master interface name")
-//	}
-//}
 
 func Test_HostNetworkBridgeService_UpdateBridge(t *testing.T) {
 	updateDto := dtos.HostNetworkBridgeUpdateDto{
@@ -125,15 +111,15 @@ func Test_HostNetworkBridgeService_UpdateBridge(t *testing.T) {
 				"123.123.125.125/24",
 			},
 			Slaves: []string{
-				bridgeSlaveVlanName,
+				bridgeTester.vlanName,
 			},
 		},
 	}
-	dto, err := bridgeService.UpdateBridge(createdBridgeName, updateDto)
+	dto, err := bridgeTester.service.UpdateBridge(bridgeTester.createdBridgeName, updateDto)
 	if err != nil {
 		t.Errorf("error creating vlan: %s", err.Error())
 	}
-	bridge, err := bridgeService.GetBridgeByName(createdBridgeName)
+	bridge, err := bridgeTester.service.GetBridgeByName(bridgeTester.createdBridgeName)
 	if err != nil {
 		t.Errorf("get bridge by name failed: %s", err.Error())
 	}
@@ -149,7 +135,7 @@ func Test_HostNetworkBridgeService_UpdateBridge(t *testing.T) {
 	if len(bridge.Slaves) != 1 {
 		t.Error("failed to update bridge slaves")
 	}
-	if bridge.Slaves[0] != bridgeSlaveVlanName {
+	if bridge.Slaves[0] != bridgeTester.vlanName {
 		t.Error("failed to update bridge slaves")
 	}
 }
@@ -162,7 +148,7 @@ func Test_HostNetworkBridgeService_UpdateIncorrectAddress(t *testing.T) {
 			},
 		},
 	}
-	_, err := bridgeService.UpdateBridge(createdBridgeName, updateDto)
+	_, err := bridgeTester.service.UpdateBridge(bridgeTester.createdBridgeName, updateDto)
 	if err != nil {
 		if !errors.As(err, errors.Validation) {
 			t.Errorf("expected error is not Validation error: %s", err.Error())
@@ -173,17 +159,17 @@ func Test_HostNetworkBridgeService_UpdateIncorrectAddress(t *testing.T) {
 }
 
 func Test_HostNetworkBridgeService_GetByNameBridge(t *testing.T) {
-	bridge, err := bridgeService.GetBridgeByName(createdBridgeName)
+	bridge, err := bridgeTester.service.GetBridgeByName(bridgeTester.createdBridgeName)
 	if err != nil {
 		t.Errorf("get bridge by name failed: %s", err.Error())
 	}
-	if bridge.Name != createdBridgeName {
-		t.Errorf("wrong bridge name: %s, expect: %s", bridge.Name, createdBridgeName)
+	if bridge.Name != bridgeTester.createdBridgeName {
+		t.Errorf("wrong bridge name: %s, expect: %s", bridge.Name, bridgeTester.createdBridgeName)
 	}
 }
 
 func Test_HostNetworkBridgeService_GetList(t *testing.T) {
-	bridges, err := bridgeService.GetBridgeList()
+	bridges, err := bridgeTester.service.GetBridgeList()
 	if err != nil {
 		t.Errorf("get list failed: %s", err.Error())
 	}
@@ -192,7 +178,7 @@ func Test_HostNetworkBridgeService_GetList(t *testing.T) {
 		if bridge.Name == "lo" {
 			t.Error("got lo interface through bridge service")
 		}
-		if bridge.Name == createdBridgeName {
+		if bridge.Name == bridgeTester.createdBridgeName {
 			bridgeFound = true
 		}
 	}
@@ -202,22 +188,22 @@ func Test_HostNetworkBridgeService_GetList(t *testing.T) {
 }
 
 func Test_HostNetworkBridgeService_Delete(t *testing.T) {
-	err := bridgeService.DeleteBridge(createdBridgeName)
+	err := bridgeTester.service.DeleteBridge(bridgeTester.createdBridgeName)
 	if err != nil {
 		t.Errorf("delete bridge failed: %s", err.Error())
 	}
-	_, err = bridgeService.GetBridgeByName(createdBridgeName)
+	_, err = bridgeTester.service.GetBridgeByName(bridgeTester.createdBridgeName)
 	if err == nil {
 		t.Error("deleted bridge was received")
 	}
 }
 
 func Test_HostNetworkBridgeService_CleaningAfterTests(t *testing.T) {
-	err := bridgeService.DeleteVlan(bridgeSlaveVlanName)
+	err := bridgeTester.service.DeleteVlan(bridgeTester.vlanName)
 	if err != nil {
 		return
 	}
-	err = os.Remove(bridgeConfigServiceFilePath)
+	err = os.Remove(bridgeTester.configFilePath)
 	if err != nil {
 		t.Errorf("remove network config file failed:  %q", err)
 	}

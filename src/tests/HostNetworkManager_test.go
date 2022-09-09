@@ -191,7 +191,7 @@ func Test_HostNetworkManager_SaveConfiguration(t *testing.T) {
 }
 
 func Test_HostNetworkManager_VlanSetNoMaster(t *testing.T) {
-	err := netManagerTester.manager.SetLinkNoMaster(netManagerTester.vlanName)
+	err := netManagerTester.manager.UnsetLinkMaster(netManagerTester.vlanName)
 	if err != nil {
 		t.Error("failed set no master for vlan")
 	}
