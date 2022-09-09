@@ -29,7 +29,7 @@ func MapDtoToEntity(dto interface{}, entity interface{}) error {
 		MapHostNetworkVlanCreateDtoToEntity(dto.(dtos.HostNetworkVlanCreateDto), entity.(*domain.HostNetworkVlan))
 	case dtos.HostNetworkVlanUpdateDto:
 		MapHostNetworkVlanUpdateDtoToEntity(dto.(dtos.HostNetworkVlanUpdateDto), entity.(*domain.HostNetworkVlan))
-		//HostNetworkBridge
+	//HostNetworkBridge
 	case dtos.HostNetworkBridgeCreateDto:
 		MapHostNetworkBridgeCreateDtoToEntity(dto.(dtos.HostNetworkBridgeCreateDto), entity.(*domain.HostNetworkBridge))
 	case dtos.HostNetworkBridgeUpdateDto:
