@@ -123,11 +123,11 @@ func (e *EthernetSwitchService) GetVLANByID(ctx context.Context, switchID uuid.U
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "==", switchID).Where("VlanID", "==", vlanID)
 	vlanSlice, err := GetListExtended[dtos.EthernetSwitchVLANDto](ctx, e.vlanRepo, queryBuilder, "", "", 1, 1)
-	if len(vlanSlice.Items) == 0 {
-		return dto, errors.NotFound.New("vlan not found")
-	}
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "failed to get list")
+	}
+	if len(vlanSlice.Items) == 0 {
+		return dto, errors.NotFound.New("vlan not found")
 	}
 	return vlanSlice.Items[0], nil
 }
