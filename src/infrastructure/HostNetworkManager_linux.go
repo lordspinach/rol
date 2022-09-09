@@ -253,13 +253,13 @@ func (h *HostNetworkManager) SetLinkMaster(slaveName, masterName string) error {
 	return nil
 }
 
-//SetLinkNoMaster removes the master of the link
+//UnsetLinkMaster removes the master of the link
 //
 //Params:
 //	linkName - name of the link
 //Return:
 //	error - if an error occurs, otherwise nil
-func (h *HostNetworkManager) SetLinkNoMaster(linkName string) error {
+func (h *HostNetworkManager) UnsetLinkMaster(linkName string) error {
 	link, err := netlink.LinkByName(linkName)
 	if err != nil {
 		return errors.Internal.Wrap(err, "getting link by name failed")

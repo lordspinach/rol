@@ -82,13 +82,13 @@ func (h *HostNetworkManager) SetLinkMaster(_, _ string) error {
 	panic("not implemented")
 }
 
-//SetLinkNoMaster removes the master of the link
+//UnsetLinkMaster removes the master of the link
 //
 //Params:
 //	linkName - name of the link
 //Return:
 //	error - if an error occurs, otherwise nil
-func (h *HostNetworkManager) SetLinkNoMaster(_ string) error {
+func (h *HostNetworkManager) UnsetLinkMaster(_ string) error {
 	panic("not implemented")
 }
 

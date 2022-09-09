@@ -66,7 +66,7 @@ func (h *HostNetworkService) syncBridgeSlaves(link interfaces.IHostNetworkLink, 
 	currSlaves := bridge.GetSlaves()
 	deleteSlice, addSlice := utils.SliceDiffElements(currSlaves, slaves)
 	for _, deleteSlave := range deleteSlice {
-		err := h.manager.SetLinkNoMaster(deleteSlave)
+		err := h.manager.UnsetLinkMaster(deleteSlave)
 		if err != nil {
 			resetErr := h.manager.ResetChanges()
 			if resetErr != nil {

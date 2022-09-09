@@ -50,13 +50,13 @@ type IHostNetworkManager interface {
 	//Return:
 	//	error - if an error occurs, otherwise nil
 	SetLinkMaster(slaveName, masterName string) error
-	//SetLinkNoMaster removes the master of the link
+	//UnsetLinkMaster removes the master of the link
 	//
 	//Params:
 	//	linkName - name of the link
 	//Return:
 	//	error - if an error occurs, otherwise nil
-	SetLinkNoMaster(linkName string) error
+	UnsetLinkMaster(linkName string) error
 	//DeleteLinkByName deletes interface on host by its name
 	//
 	//Params:
