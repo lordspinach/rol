@@ -248,7 +248,7 @@ func (e *EthernetSwitchService) deleteAllPortsBySwitchID(ctx context.Context, sw
 	return nil
 }
 
-func (e *EthernetSwitchService) portExist(ctx context.Context, switchID, portId uuid.UUID) (bool, error) {
+func (e *EthernetSwitchService) portIsExist(ctx context.Context, switchID, portId uuid.UUID) (bool, error) {
 	_, err := e.GetPortByID(ctx, switchID, portId)
 	if err != nil {
 		if !errors.As(err, errors.NotFound) {
@@ -261,22 +261,22 @@ func (e *EthernetSwitchService) portExist(ctx context.Context, switchID, portId 
 
 func (e *EthernetSwitchService) dtoPortsExist(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) (bool, error) {
 	for _, tPort := range dto.TaggedPorts {
-		portExist, err := e.portExist(ctx, switchID, tPort)
+		portIsExist, err := e.portIsExist(ctx, switchID, tPort)
 		if err != nil {
 			return false, errors.Internal.Wrap(err, ErrorPortExistence)
 		}
-		if !portExist {
+		if !portIsExist {
 			err = errors.Validation.New(errors.ValidationErrorMessage)
 			err = errors.AddErrorContext(err, "TaggedPorts", ErrorVlanOnNonexistentPort)
 			return false, err
 		}
 	}
 	for _, uPort := range dto.UntaggedPorts {
-		portExist, err := e.portExist(ctx, switchID, uPort)
+		portIsExist, err := e.portIsExist(ctx, switchID, uPort)
 		if err != nil {
 			return false, errors.Internal.Wrap(err, ErrorPortExistence)
 		}
-		if !portExist {
+		if !portIsExist {
 			err = errors.Validation.New(errors.ValidationErrorMessage)
 			err = errors.AddErrorContext(err, "UntaggedPorts", ErrorVlanOnNonexistentPort)
 			return false, err
