@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"rol/app/errors"
 	"rol/app/mappers"
@@ -259,28 +260,54 @@ func (e *EthernetSwitchService) portIsExist(ctx context.Context, switchID, portI
 	return true, nil
 }
 
-func (e *EthernetSwitchService) dtoPortsExist(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) (bool, error) {
-	for _, tPort := range dto.TaggedPorts {
-		portIsExist, err := e.portIsExist(ctx, switchID, tPort)
-		if err != nil {
-			return false, errors.Internal.Wrap(err, ErrorPortExistence)
-		}
-		if !portIsExist {
-			err = errors.Validation.New(errors.ValidationErrorMessage)
-			err = errors.AddErrorContext(err, "TaggedPorts", ErrorVlanOnNonexistentPort)
-			return false, err
-		}
+func (e *EthernetSwitchService) getNonexistentPorts(ctx context.Context, switchID uuid.UUID, portsToCheck []uuid.UUID) ([]uuid.UUID, error) {
+	queryBuilder := e.portRepo.NewQueryBuilder(ctx)
+	queryBuilder.Where("SwitchID", "==", switchID)
+	for _, port := range portsToCheck {
+		queryBuilder.Or("ID", "==", port.ID())
 	}
-	for _, uPort := range dto.UntaggedPorts {
-		portIsExist, err := e.portIsExist(ctx, switchID, uPort)
-		if err != nil {
-			return false, errors.Internal.Wrap(err, ErrorPortExistence)
+	count, err := e.portRepo.Count(ctx, queryBuilder)
+	if err != nil {
+		return []uuid.UUID{}, errors.Internal.Wrap(err, "failed to count ports")
+	}
+	ports, err := e.portRepo.GetList(ctx, "", "", 1, int(count), queryBuilder)
+	if err != nil {
+		return []uuid.UUID{}, errors.Internal.Wrap(err, "failed to get ports list")
+	}
+	if len(ports) == len(portsToCheck) {
+		return []uuid.UUID{}, nil
+	}
+	var existentPorts []uuid.UUID
+	for _, port := range ports {
+		existentPorts = append(existentPorts, port.ID)
+	}
+	nonexistentPorts, _ := utils.SliceDiffElements(portsToCheck, existentPorts)
+	return nonexistentPorts, nil
+}
+
+func (e *EthernetSwitchService) dtoPortsExist(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) (bool, error) {
+	nonexistentTaggedPorts, err := e.getNonexistentPorts(ctx, switchID, dto.TaggedPorts)
+	if err != nil {
+		return false, errors.Internal.Wrap(err, "failed to get nonexistent tagged ports")
+	}
+	if len(nonexistentTaggedPorts) > 0 {
+		err = errors.Validation.New(errors.ValidationErrorMessage)
+		for _, port := range nonexistentTaggedPorts {
+			err = errors.AddErrorContext(err, "TaggedPorts", fmt.Sprintf("port %s doesn't exist", port.String()))
 		}
-		if !portIsExist {
-			err = errors.Validation.New(errors.ValidationErrorMessage)
-			err = errors.AddErrorContext(err, "UntaggedPorts", ErrorVlanOnNonexistentPort)
-			return false, err
+		return false, err
+	}
+
+	nonexistentUntaggedPorts, err := e.getNonexistentPorts(ctx, switchID, dto.UntaggedPorts)
+	if err != nil {
+		return false, errors.Internal.Wrap(err, "failed to get nonexistent untagged ports")
+	}
+	if len(nonexistentUntaggedPorts) > 0 {
+		err = errors.Validation.New(errors.ValidationErrorMessage)
+		for _, port := range nonexistentUntaggedPorts {
+			err = errors.AddErrorContext(err, "UntaggedPorts", fmt.Sprintf("port %s doesn't exist", port.String()))
 		}
+		return false, err
 	}
 	return true, nil
 }
