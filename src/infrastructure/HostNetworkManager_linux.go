@@ -576,7 +576,7 @@ func (h *HostNetworkManager) loadBridgeConfiguration(config domain.HostNetworkCo
 			if err != nil {
 				return errors.Internal.Wrap(err, "delete link by name error")
 			}
-		} else if h.vlanExistInConfig(config, inter.GetName()) {
+		} else if h.bridgeExistInConfig(config, inter.GetName()) {
 			addresses := inter.GetAddresses()
 			for _, address := range addresses {
 				if !h.addressExistInLinkConfig(config, inter.GetName(), address) {
