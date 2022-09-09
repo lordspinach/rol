@@ -10,6 +10,14 @@ package app {
         --
         +CreateVlan(master string, vlanID int) (string, error)
         --
+        +CreateBridge(name string) (string, error)
+        --
+        +SetLinkUp(linkName string) error
+        --
+        +SetLinkMaster(slaveName, masterName string) error
+        --
+        +UnsetLinkMaster(linkName string) error
+        --
         +DeleteLinkByName(name string) error
         --
         +AddrAdd(linkName string, addr net.IPNet) error
@@ -35,6 +43,22 @@ package app {
 
     note left of IHostNetworkManager::CreateVlan
     Create host vlan interface with name rol.{Master}.{VlanID}
+    end note
+
+    note left of IHostNetworkManager::CreateBridge
+    Create host bridge interface with name rol.br.{Name}
+    end note
+
+    note left of IHostNetworkManager::SetLinkUp
+    Enables the link on host
+    end note
+
+    note left of IHostNetworkManager::SetLinkMaster
+    Set master for link
+    end note
+
+    note left of IHostNetworkManager::UnsetLinkMaster
+    Removes the master of the link
     end note
 
     note left of IHostNetworkManager::DeleteLinkByName

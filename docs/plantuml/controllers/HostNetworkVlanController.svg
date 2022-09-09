@@ -31,7 +31,7 @@ link HostNetworkVlanService to HostNetworkManager--><g id="link_HostNetworkVlanS
 link HostNetworkVlanController to HostNetworkVlanService--><g id="link_HostNetworkVlanController_HostNetworkVlanService"><path codeLine="42" d="M1968,434.5 C1934.84,434.5 1972.73,640.07 1999.04,765.94 " fill="none" id="HostNetworkVlanController-HostNetworkVlanService" style="stroke:#181818;stroke-width:1.0;"/></g><!--MD5=[840c0ef918040d3d9c2985e64a29669b]
 @startuml
 
-!include ../services/HostNetworkVlanService.puml
+!include ../services/HostNetworkService.puml
 
 package controllers {
     class HostNetworkVlanController {
