@@ -200,6 +200,10 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 	}
 	err = e.createVlansOnSwitch(ctx, switchID, createDto)
 	if err != nil {
+		deleteErr := e.vlanRepo.Delete(ctx, newVLAN.ID)
+		if deleteErr != nil {
+			return dto, errors.Internal.Wrap(deleteErr, "repository failed to delete VLAN")
+		}
 		return dto, err
 	}
 	outDto := dtos.EthernetSwitchVLANDto{}
