@@ -201,6 +201,9 @@ func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchI
 		return errors.Internal.Wrap(err, "failed to count VLANs")
 	}
 	VLANs, err := e.GetVLANs(ctx, switchID, portID.String(), "", "", 1, int(count))
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed to get vlan's list")
+	}
 	for _, vlan := range VLANs.Items {
 		tPorts := utils.RemoveElementFromSlice[uuid.UUID](vlan.TaggedPorts, portID)
 		uPorts := utils.RemoveElementFromSlice[uuid.UUID](vlan.UntaggedPorts, portID)
@@ -249,8 +252,8 @@ func (e *EthernetSwitchService) deleteAllPortsBySwitchID(ctx context.Context, sw
 	return nil
 }
 
-func (e *EthernetSwitchService) portIsExist(ctx context.Context, switchID, portId uuid.UUID) (bool, error) {
-	_, err := e.GetPortByID(ctx, switchID, portId)
+func (e *EthernetSwitchService) portIsExist(ctx context.Context, switchID, portID uuid.UUID) (bool, error) {
+	_, err := e.GetPortByID(ctx, switchID, portID)
 	if err != nil {
 		if !errors.As(err, errors.NotFound) {
 			return false, errors.Internal.Wrap(err, "repository failed to get ethernet switch")

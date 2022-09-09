@@ -190,10 +190,10 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 	}
 	entity := new(domain.EthernetSwitchVLAN)
 	err = mappers.MapDtoToEntity(createDto, entity)
-	entity.EthernetSwitchID = switchID
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "failed to map ethernet switch port dto to entity")
 	}
+	entity.EthernetSwitchID = switchID
 	newVLAN, err := e.vlanRepo.Insert(ctx, *entity)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "repository failed to insert VLAN")
@@ -208,6 +208,9 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 	}
 	outDto := dtos.EthernetSwitchVLANDto{}
 	err = mappers.MapEntityToDto(newVLAN, &outDto)
+	if err != nil {
+		return dto, errors.Internal.Wrap(err, "failed to map vlan entity to dto")
+	}
 	return outDto, nil
 }
 
@@ -234,7 +237,7 @@ func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "get VLAN by id failed")
 	}
-	err = e.updateVLANsOnPort(ctx, VLAN, updateDto, switchID)
+	err = e.syncVlanPortsChangesOnSwitch(ctx, VLAN, updateDto, switchID)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "update VLANs on port failed")
 	}
@@ -263,7 +266,7 @@ func (e *EthernetSwitchService) DeleteVLAN(ctx context.Context, switchID, id uui
 	return e.vlanRepo.Delete(ctx, id)
 }
 
-func (e *EthernetSwitchService) updateVLANsOnPort(ctx context.Context, VLAN dtos.EthernetSwitchVLANDto, updateDto dtos.EthernetSwitchVLANUpdateDto, switchID uuid.UUID) error {
+func (e *EthernetSwitchService) syncVlanPortsChangesOnSwitch(ctx context.Context, VLAN dtos.EthernetSwitchVLANDto, updateDto dtos.EthernetSwitchVLANUpdateDto, switchID uuid.UUID) error {
 	ethernetSwitch, err := e.switchRepo.GetByIDExtended(ctx, switchID, nil)
 	if err != nil {
 		return errors.Internal.Wrap(err, ErrorGetSwitch)
@@ -314,6 +317,10 @@ func (e *EthernetSwitchService) updateVLANsOnPort(ctx context.Context, VLAN dtos
 			return errors.Internal.Wrap(err, "failed to add untagged VLAN on port")
 		}
 	}
+	err = switchManager.SaveConfig()
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed to save config")
+	}
 	return nil
 }
 
@@ -335,25 +342,28 @@ func (e *EthernetSwitchService) deleteAllVLANsBySwitchID(ctx context.Context, sw
 	if err != nil {
 		return errors.Internal.Wrap(err, "failed to get VLANs")
 	}
+	ethernetSwitch, err := e.switchRepo.GetByID(ctx, switchID)
+	if err != nil {
+		return errors.Internal.Wrap(err, "failed to get switch")
+	}
+	switchManager := GetEthernetSwitchManager(ethernetSwitch)
 	for _, vlan := range vlans {
 		err = e.vlanRepo.Delete(ctx, vlan.ID)
 		if err != nil {
 			return errors.Internal.Wrap(err, "failed to remove vlan by id in repository")
 		}
-	}
-	return nil
-}
-
-func (e *EthernetSwitchService) getDifference(a, b []uuid.UUID) []uuid.UUID {
-	mb := make(map[uuid.UUID]struct{}, len(b))
-	for _, x := range b {
-		mb[x] = struct{}{}
-	}
-	var diff []uuid.UUID
-	for _, x := range a {
-		if _, found := mb[x]; !found {
-			diff = append(diff, x)
+		if switchManager != nil {
+			err = switchManager.DeleteVLAN(vlan.VlanID)
+			if err != nil {
+				return errors.Internal.Wrap(err, "failed to delete vlan from switch")
+			}
 		}
 	}
-	return diff
+	if switchManager != nil {
+		err = switchManager.SaveConfig()
+		if err != nil {
+			return errors.Internal.Wrap(err, "failed to save config")
+		}
+	}
+	return nil
 }
