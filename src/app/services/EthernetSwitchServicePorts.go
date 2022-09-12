@@ -238,6 +238,21 @@ func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchI
 		if err != nil {
 			return err
 		}
+		ethernetSwitch, err := e.switchRepo.GetByID(ctx, switchID)
+		if err != nil {
+			return errors.Internal.Wrap(err, ErrorGetSwitch)
+		}
+		switchManager := GetEthernetSwitchManager(ethernetSwitch)
+		if switchManager != nil {
+			port, err := e.GetPortByID(ctx, switchID, portID)
+			if err != nil {
+				return errors.Internal.Wrap(err, ErrorGetPortByID)
+			}
+			err = switchManager.RemoveVLANFromPort(port.Name, vlan.VlanID)
+			if err != nil {
+				return errors.Internal.Wrap(err, "remove vlan from port on switch failed")
+			}
+		}
 	}
 	return nil
 }
