@@ -322,29 +322,29 @@ func (e *EthernetSwitchService) getNonexistentPorts(ctx context.Context, switchI
 	return nonexistentPorts, nil
 }
 
-func (e *EthernetSwitchService) dtoPortsExist(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) (bool, error) {
+func (e *EthernetSwitchService) CheckNonexistentPorts(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) error {
 	nonexistentTaggedPorts, err := e.getNonexistentPorts(ctx, switchID, dto.TaggedPorts)
 	if err != nil {
-		return false, errors.Internal.Wrap(err, "failed to get nonexistent tagged ports")
+		return errors.Internal.Wrap(err, "failed to get nonexistent tagged ports")
 	}
 	if len(nonexistentTaggedPorts) > 0 {
 		err = errors.Validation.New(errors.ValidationErrorMessage)
 		for _, port := range nonexistentTaggedPorts {
 			err = errors.AddErrorContext(err, "TaggedPorts", fmt.Sprintf("port %s doesn't exist", port.String()))
 		}
-		return false, err
+		return err
 	}
 
 	nonexistentUntaggedPorts, err := e.getNonexistentPorts(ctx, switchID, dto.UntaggedPorts)
 	if err != nil {
-		return false, errors.Internal.Wrap(err, "failed to get nonexistent untagged ports")
+		return errors.Internal.Wrap(err, "failed to get nonexistent untagged ports")
 	}
 	if len(nonexistentUntaggedPorts) > 0 {
 		err = errors.Validation.New(errors.ValidationErrorMessage)
 		for _, port := range nonexistentUntaggedPorts {
 			err = errors.AddErrorContext(err, "UntaggedPorts", fmt.Sprintf("port %s doesn't exist", port.String()))
 		}
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 }

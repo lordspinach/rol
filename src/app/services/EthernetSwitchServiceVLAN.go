@@ -52,11 +52,8 @@ func (e *EthernetSwitchService) checkExistenceOfRelatedEntities(ctx context.Cont
 	if !switchExist {
 		return errors.NotFound.New(ErrorSwitchNotFound)
 	}
-	portsExist, err := e.dtoPortsExist(ctx, switchID, dto)
+	err = e.CheckNonexistentPorts(ctx, switchID, dto)
 	if err != nil {
-		return err //we already wrap error
-	}
-	if !portsExist {
 		return err //we already wrap error
 	}
 	return nil
@@ -94,10 +91,6 @@ func (e *EthernetSwitchService) createVlansOnSwitch(ctx context.Context, switchI
 		if err != nil {
 			return errors.Internal.Wrap(err, ErrorAddTaggedVLAN)
 		}
-	}
-	err = switchManager.SaveConfig()
-	if err != nil {
-		return errors.Internal.Wrap(err, "save switch config failed")
 	}
 	return nil
 }
