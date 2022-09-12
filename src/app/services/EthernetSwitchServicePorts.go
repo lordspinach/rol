@@ -193,6 +193,20 @@ func (e *EthernetSwitchService) DeletePort(ctx context.Context, switchID, id uui
 	return nil
 }
 
+func (e *EthernetSwitchService) checkVlanContainsPort(vlan dtos.EthernetSwitchVLANDto, portID uuid.UUID) bool {
+	for _, tPort := range vlan.TaggedPorts {
+		if tPort == portID {
+			return true
+		}
+	}
+	for _, uPort := range vlan.UntaggedPorts {
+		if uPort == portID {
+			return true
+		}
+	}
+	return false
+}
+
 func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchID, portID uuid.UUID) error {
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "==", switchID)
@@ -205,6 +219,9 @@ func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchI
 		return errors.Internal.Wrap(err, "failed to get vlan's list")
 	}
 	for _, vlan := range VLANs.Items {
+		if !e.checkVlanContainsPort(vlan, portID) {
+			continue
+		}
 		tPorts := utils.RemoveElementFromSlice[uuid.UUID](vlan.TaggedPorts, portID)
 		uPorts := utils.RemoveElementFromSlice[uuid.UUID](vlan.UntaggedPorts, portID)
 		if len(tPorts) == 0 {
