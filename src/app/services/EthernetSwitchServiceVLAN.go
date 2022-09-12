@@ -199,6 +199,17 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 		}
 		return dto, err
 	}
+	ethernetSwitch, err := e.switchRepo.GetByID(ctx, switchID)
+	if err != nil {
+		return dto, errors.Internal.Wrap(err, ErrorGetSwitch)
+	}
+	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	if switchManager != nil {
+		err = switchManager.SaveConfig()
+		if err != nil {
+			return dto, errors.Internal.Wrap(err, "save switch config failed")
+		}
+	}
 	outDto := dtos.EthernetSwitchVLANDto{}
 	err = mappers.MapEntityToDto(newVLAN, &outDto)
 	if err != nil {
@@ -233,6 +244,17 @@ func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID uuid.UU
 	err = e.syncVlanPortsChangesOnSwitch(ctx, VLAN, updateDto, switchID)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "update VLANs on port failed")
+	}
+	ethernetSwitch, err := e.switchRepo.GetByID(ctx, switchID)
+	if err != nil {
+		return dto, errors.Internal.Wrap(err, ErrorGetSwitch)
+	}
+	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	if switchManager != nil {
+		err = switchManager.SaveConfig()
+		if err != nil {
+			return dto, errors.Internal.Wrap(err, "save switch config failed")
+		}
 	}
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchID", "==", switchID)
@@ -309,10 +331,6 @@ func (e *EthernetSwitchService) syncVlanPortsChangesOnSwitch(ctx context.Context
 		if err != nil {
 			return errors.Internal.Wrap(err, "failed to add untagged VLAN on port")
 		}
-	}
-	err = switchManager.SaveConfig()
-	if err != nil {
-		return errors.Internal.Wrap(err, "failed to save config")
 	}
 	return nil
 }
