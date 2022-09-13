@@ -104,7 +104,7 @@ func (e *EthernetSwitchService) createVlansOnSwitch(ctx context.Context, switchI
 //Return
 //	*dtos.EthernetSwitchVLANDto - point to ethernet switch VLAN dto, if existed, otherwise nil
 //	error - if an error occurs, otherwise nil
-func (e *EthernetSwitchService) GetVLANByID(ctx context.Context, switchID uuid.UUID, vlanID int) (dtos.EthernetSwitchVLANDto, error) {
+func (e *EthernetSwitchService) GetVLANByID(ctx context.Context, switchID, id uuid.UUID) (dtos.EthernetSwitchVLANDto, error) {
 	dto := dtos.EthernetSwitchVLANDto{}
 	switchExist, err := e.switchIsExist(ctx, switchID)
 	if err != nil {
@@ -114,15 +114,8 @@ func (e *EthernetSwitchService) GetVLANByID(ctx context.Context, switchID uuid.U
 		return dto, errors.NotFound.New(ErrorSwitchNotFound)
 	}
 	queryBuilder := e.vlanRepo.NewQueryBuilder(ctx)
-	queryBuilder.Where("EthernetSwitchID", "==", switchID).Where("VlanID", "==", vlanID)
-	vlanSlice, err := GetListExtended[dtos.EthernetSwitchVLANDto](ctx, e.vlanRepo, queryBuilder, "", "", 1, 1)
-	if err != nil {
-		return dto, errors.Internal.Wrap(err, "failed to get list")
-	}
-	if len(vlanSlice.Items) == 0 {
-		return dto, errors.NotFound.New("vlan not found")
-	}
-	return vlanSlice.Items[0], nil
+	queryBuilder.Where("EthernetSwitchID", "==", switchID)
+	return GetByID[dtos.EthernetSwitchVLANDto, domain.EthernetSwitchVLAN](ctx, e.vlanRepo, id, queryBuilder)
 }
 
 //GetVLANs Get list of ethernet switch VLANs with filtering and pagination
@@ -227,7 +220,7 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 //  updateDto - dtos.EthernetSwitchVLANUpdateDto DTO for updating entity
 //Return
 //	error - if an error occurs, otherwise nil
-func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID uuid.UUID, vlanID int, updateDto dtos.EthernetSwitchVLANUpdateDto) (dtos.EthernetSwitchVLANDto, error) {
+func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID, id uuid.UUID, updateDto dtos.EthernetSwitchVLANUpdateDto) (dtos.EthernetSwitchVLANDto, error) {
 	dto := dtos.EthernetSwitchVLANDto{}
 	err := validators.ValidateEthernetSwitchVLANUpdateDto(updateDto)
 	if err != nil {
@@ -237,7 +230,7 @@ func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, err
 	}
-	VLAN, err := e.GetVLANByID(ctx, switchID, vlanID)
+	VLAN, err := e.GetVLANByID(ctx, switchID, id)
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "get VLAN by id failed")
 	}

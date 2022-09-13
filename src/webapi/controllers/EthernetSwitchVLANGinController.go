@@ -7,7 +7,6 @@ import (
 	"rol/app/services"
 	"rol/dtos"
 	"rol/webapi"
-	"strconv"
 )
 
 //EthernetSwitchVLANGinController ethernet switch GIN controller constructor
@@ -34,9 +33,9 @@ func NewEthernetSwitchVLANGinController(service *services.EthernetSwitchService,
 func RegisterEthernetSwitchVLANGinController(controller *EthernetSwitchVLANGinController, server *webapi.GinHTTPServer) {
 	groupRoute := server.Engine.Group("/api/v1")
 	groupRoute.GET("/ethernet-switch/:id/vlan/", controller.GetList)
-	groupRoute.GET("/ethernet-switch/:id/vlan/:vlanID", controller.GetByID)
+	groupRoute.GET("/ethernet-switch/:id/vlan/:vlanUUID", controller.GetByID)
 	groupRoute.POST("/ethernet-switch/:id/vlan/", controller.Create)
-	groupRoute.PUT("/ethernet-switch/:id/vlan/:vlanID", controller.Update)
+	groupRoute.PUT("/ethernet-switch/:id/vlan/:vlanUUID", controller.Update)
 	groupRoute.DELETE("/ethernet-switch/:id/vlan/", controller.Delete)
 }
 
@@ -83,14 +82,14 @@ func (e *EthernetSwitchVLANGinController) GetList(ctx *gin.Context) {
 // @Accept  json
 // @Produce json
 // @param	id		path		string		true	"Ethernet switch ID"
-// @param	vlanID	path		int		true	"Ethernet switch VLAN ID"
+// @param	vlanUUID	path		string		true	"Ethernet switch VLAN UUID"
 // @Success 200 	{object} 	dtos.EthernetSwitchVLANDto
 // @Failure	404		"Not Found"
 // @Failure	500		"Internal Server Error"
-// @router /ethernet-switch/{id}/vlan/{vlanID} [get]
+// @router /ethernet-switch/{id}/vlan/{vlanUUID} [get]
 func (e *EthernetSwitchVLANGinController) GetByID(ctx *gin.Context) {
-	strID := ctx.Param("vlanID")
-	id, err := strconv.Atoi(strID)
+	strID := ctx.Param("vlanUUID")
+	id, err := uuid.Parse(strID)
 	if err != nil {
 		abortWithStatusByErrorType(ctx, err)
 		return
@@ -143,13 +142,13 @@ func (e *EthernetSwitchVLANGinController) Create(ctx *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @param id path string true "Ethernet switch ID"
-// @param vlanID path int true "Ethernet switch VLAN ID"
+// @param vlanUUID path string true "Ethernet switch VLAN UUID"
 // @Param request body dtos.EthernetSwitchVLANUpdateDto true "Ethernet switch fields"
 // @Success 200 {object} dtos.EthernetSwitchVLANDto
 // @Failure		400		{object}	dtos.ValidationErrorDto
 // @Failure		404		"Not Found"
 // @Failure		500		"Internal Server Error"
-// @router /ethernet-switch/{id}/vlan/{vlanID} [put]
+// @router /ethernet-switch/{id}/vlan/{vlanUUID} [put]
 func (e *EthernetSwitchVLANGinController) Update(ctx *gin.Context) {
 	reqDto, err := getRequestDtoAndRestoreBody[dtos.EthernetSwitchVLANUpdateDto](ctx)
 	if err != nil {
@@ -161,13 +160,12 @@ func (e *EthernetSwitchVLANGinController) Update(ctx *gin.Context) {
 		abortWithStatusByErrorType(ctx, err)
 		return
 	}
-	strID := ctx.Param("vlanID")
-	vlanID, err := strconv.Atoi(strID)
+	vlanUUID, err := parseUUIDParam(ctx, "vlanUUID")
 	if err != nil {
 		abortWithStatusByErrorType(ctx, err)
 		return
 	}
-	dto, err := e.service.UpdateVLAN(ctx, switchID, vlanID, reqDto)
+	dto, err := e.service.UpdateVLAN(ctx, switchID, vlanUUID, reqDto)
 	handleWithData(ctx, err, dto)
 }
 
@@ -180,22 +178,22 @@ func (e *EthernetSwitchVLANGinController) Update(ctx *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @param	 id			query	string		true	"Ethernet switch ID"
-// @param	 vlanID		query	string		true	"Ethernet switch VLAN ID"
+// @param	 vlanUUID		query	string		true	"Ethernet switch VLAN UUID"
 // @Success 204 	"OK, but No Content"
 // @Failure	404		"Not Found"
 // @Failure	500		"Internal Server Error"
-// @router /ethernet-switch/{id}/vlan/{vlanID}  [delete]
+// @router /ethernet-switch/{id}/vlan/{vlanUUID}  [delete]
 func (e *EthernetSwitchVLANGinController) Delete(ctx *gin.Context) {
 	switchID, err := parseUUIDParam(ctx, "id")
 	if err != nil {
 		abortWithStatusByErrorType(ctx, err)
 		return
 	}
-	vlanID, err := parseUUIDParam(ctx, "vlanID")
+	vlanUUID, err := parseUUIDParam(ctx, "vlanUUID")
 	if err != nil {
 		abortWithStatusByErrorType(ctx, err)
 		return
 	}
-	err = e.service.DeleteVLAN(ctx, switchID, vlanID)
+	err = e.service.DeleteVLAN(ctx, switchID, vlanUUID)
 	handle(ctx, err)
 }
