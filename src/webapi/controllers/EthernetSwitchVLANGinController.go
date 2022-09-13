@@ -143,7 +143,7 @@ func (e *EthernetSwitchVLANGinController) Create(ctx *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @param id path string true "Ethernet switch ID"
-// @param vlanID path int true "Ethernet switch ID"
+// @param vlanID path int true "Ethernet switch VLAN ID"
 // @Param request body dtos.EthernetSwitchVLANUpdateDto true "Ethernet switch fields"
 // @Success 200 {object} dtos.EthernetSwitchVLANDto
 // @Failure		400		{object}	dtos.ValidationErrorDto
