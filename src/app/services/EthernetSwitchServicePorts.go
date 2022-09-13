@@ -194,17 +194,7 @@ func (e *EthernetSwitchService) DeletePort(ctx context.Context, switchID, id uui
 }
 
 func (e *EthernetSwitchService) checkVlanContainsPort(vlan dtos.EthernetSwitchVLANDto, portID uuid.UUID) bool {
-	for _, tPort := range vlan.TaggedPorts {
-		if tPort == portID {
-			return true
-		}
-	}
-	for _, uPort := range vlan.UntaggedPorts {
-		if uPort == portID {
-			return true
-		}
-	}
-	return false
+	return utils.SliceContainsElement(vlan.TaggedPorts, portID) || utils.SliceContainsElement(vlan.UntaggedPorts, portID)
 }
 
 func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchID, portID uuid.UUID) error {
