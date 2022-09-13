@@ -1,0 +1,90 @@
+@startuml
+!include ../repositories/TFTPConfigRepository.puml
+!include ../repositories/TFTPPathRatioRepository.puml
+!include ../dto/TFTPConfig/TFTPConfigDto.puml
+!include ../dto/TFTPConfig/TFTPConfigCreateDto.puml
+!include ../dto/TFTPConfig/TFTPConfigUpdateDto.puml
+!include ../dto/TFTPPathRatio/TFTPPathDto.puml
+!include ../dto/TFTPPathRatio/TFTPPathCreateDto.puml
+!include ../managers/TFTPServerManager.puml
+
+package app {
+    class TFTPServerService {
+        -configsRepo interfaces.IGenericRepository[domain.TFTPConfig]
+        --
+        -pathsRepo interfaces.IGenericRepository[domain.TFTPPathRatio]
+        --
+        -manager *infrastructure.TFTPServerManager
+        --
+        +GetByID(ctx context.Context, id uuid.UUID) (dtos.TFTPConfigDto, error)
+        --
+        +GetList(ctx context.Context, search, orderBy, orderDirection string, page, pageSize int) (dtos.PaginatedItemsDto[dtos.TFTPConfigDto], error)
+        --
+        +Create(ctx context.Context, createDto dtos.TFTPConfigCreateDto) (dtos.TFTPConfigDto, error)
+        --
+        +Update(ctx context.Context, updateDto dtos.TFTPConfigUpdateDto, id uuid.UUID) (dtos.TFTPConfigDto, error)
+        --
+        +Delete(ctx context.Context, id uuid.UUID) error
+        --
+        +GetPaths(ctx context.Context, configID uuid.UUID, orderBy, orderDirection string, page, pageSize int) (dtos.PaginatedItemsDto[dtos.TFTPPathDto], error)
+        --
+        +CreatePath(ctx context.Context, configID uuid.UUID, createDto dtos.TFTPPathCreateDto) (dtos.TFTPPathDto, error)
+        --
+        +DeletePath(ctx context.Context, configID uuid.UUID, id uuid.UUID) error
+    }
+    TFTPServerService::manager -- TFTPServerManager
+
+    TFTPConfigRepository -right- TFTPServerService::configsRepo
+    TFTPPathRatioRepository -right- TFTPServerService::pathsRepo
+
+    TFTPServerService .[hidden]up. IGenericRepository
+    GormGenericRepository .[hidden]down. IGenericRepository
+    TFTPServerService .[hidden]down. dtos
+
+    note as TFTPServiceTypes
+    EntityType is TFTPConfig
+    CreateDtoType is TFTPConfigCreateDto
+    UpdateDtoType is TFTPConfigUpdateDto
+    DtoType is TFTPConfigDto
+    end note
+
+    TFTPServerService .down. TFTPServiceTypes
+
+    TFTPServiceTypes .. TFTPConfigCreateDto
+    TFTPServiceTypes .. TFTPConfigUpdateDto
+    TFTPServiceTypes .. TFTPConfigDto
+
+    note left of TFTPServerService::GetByID
+        Get TFTP server config by ID
+    end note
+
+    note left of TFTPServerService::GetList
+        Get list of TFTP server configs
+    end note
+
+    note left of TFTPServerService::Create
+        Create new TFTP server config
+    end note
+
+    note left of TFTPServerService::Update
+        Update TFTP server config
+    end note
+
+    note left of TFTPServerService::Delete
+        Delete TFTP server config
+    end note
+
+    note left of TFTPServerService::GetPaths
+        Get paths ratio for TFTP server
+    end note
+
+    note left of TFTPServerService::CreatePath
+        Create new path ratio for TFTP server
+    end note
+
+    note left of TFTPServerService::DeletePath
+        Delete path ratio on TFTP server
+    end note
+}
+
+@enduml

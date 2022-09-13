@@ -1,0 +1,25 @@
+@startuml
+
+!include ../entities/TFTPConfig.puml
+!include ../entities/TFTPPathRatio.puml
+
+package infrastructure {
+    class TFTPServerManager {
+        -servers []*tftpServer
+        --
+        -logger  *logrus.Logger
+        --
+        +CreateTFTPServer(config domain.TFTPConfig)
+        --
+        +StartTFTPServer(id uuid.UUID)
+        --
+        +StopTFTPServer(id uuid.UUID)
+        --
+        +UpdatePaths(id uuid.UUID, paths []domain.TFTPPathRatio)
+        --
+        +ServerIsRunning(id uuid.UUID) bool
+    }
+
+}
+
+@enduml

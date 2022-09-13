@@ -1,0 +1,16 @@
+@startuml
+
+!include TFTPPathBaseDto.puml
+
+package dtos {
+    class TFTPPathDto {
+        +ID uuid.UUID
+        --
+        +TFTPServerID uuid.UUID
+    }
+}
+
+TFTPPathDto --* TFTPPathBaseDto
+
+@enduml
+

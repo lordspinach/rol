@@ -1,0 +1,14 @@
+@startuml
+
+!include ../BaseDto.puml
+!include TFTPConfigBaseDto.puml
+
+package dtos {
+    class TFTPConfigDto {}
+}
+
+TFTPConfigDto --* TFTPConfigBaseDto
+TFTPConfigDto --* BaseDto
+
+@enduml
+

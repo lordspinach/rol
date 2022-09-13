@@ -1,0 +1,16 @@
+@startuml
+
+!include Entity.puml
+
+package domain {
+    class TFTPPathRatio {
+        +TFTPServerID uuid.UUID
+        --
+        +ActualPath string
+        --
+        +VirtualPath string
+    }
+    TFTPPathRatio -down-* Entity
+}
+
+@enduml
