@@ -45,6 +45,8 @@ func NewGormEntityDb(cfg *domain.AppConfig) (*gorm.DB, error) {
 	err = db.AutoMigrate(
 		&domain.EthernetSwitch{},
 		&domain.EthernetSwitchPort{},
+		&domain.TFTPConfig{},
+		&domain.TFTPPathRatio{},
 	)
 	if err != nil {
 		return nil, errors.Internal.Wrap(err, "failed to apply db migrations")
