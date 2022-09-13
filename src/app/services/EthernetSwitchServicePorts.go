@@ -312,7 +312,7 @@ func (e *EthernetSwitchService) getNonexistentPorts(ctx context.Context, switchI
 	return nonexistentPorts, nil
 }
 
-func (e *EthernetSwitchService) CheckNonexistentPorts(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) error {
+func (e *EthernetSwitchService) checkNonexistentPorts(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchVLANBaseDto) error {
 	nonexistentTaggedPorts, err := e.getNonexistentPorts(ctx, switchID, dto.TaggedPorts)
 	if err != nil {
 		return errors.Internal.Wrap(err, "failed to get nonexistent tagged ports")
