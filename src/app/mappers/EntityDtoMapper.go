@@ -29,6 +29,14 @@ func MapDtoToEntity(dto interface{}, entity interface{}) error {
 		MapHostNetworkCreateDtoToEntity(dto.(dtos.HostNetworkVlanCreateDto), entity.(*domain.HostNetworkVlan))
 	case dtos.HostNetworkVlanUpdateDto:
 		MapHostNetworkUpdateDtoToEntity(dto.(dtos.HostNetworkVlanUpdateDto), entity.(*domain.HostNetworkVlan))
+	//TFTPConfig
+	case dtos.TFTPConfigCreateDto:
+		MapTFTPConfigCreateDtoToEntity(dto.(dtos.TFTPConfigCreateDto), entity.(*domain.TFTPConfig))
+	case dtos.TFTPConfigUpdateDto:
+		MapTFTPConfigUpdateDtoToEntity(dto.(dtos.TFTPConfigUpdateDto), entity.(*domain.TFTPConfig))
+	//TFTPPathRatio
+	case dtos.TFTPPathCreateDto:
+		MapTFTPPathCreateDtoToEntity(dto.(dtos.TFTPPathCreateDto), entity.(*domain.TFTPPathRatio))
 	default:
 		return errors.Internal.Newf("can't find route for map dto %+v to entity %+v", dto, entity)
 	}
@@ -61,6 +69,12 @@ func MapEntityToDto(entity interface{}, dto interface{}) error {
 	//HostNetworkVlan
 	case domain.HostNetworkVlan:
 		MapHostNetworkVlanToDto(entity.(domain.HostNetworkVlan), dto.(*dtos.HostNetworkVlanDto))
+	//TFTPConfig
+	case domain.TFTPConfig:
+		MapTFTPConfigToDto(entity.(domain.TFTPConfig), dto.(*dtos.TFTPConfigDto))
+	//TFTPPathRatio
+	case domain.TFTPPathRatio:
+		MapTFTPPathToDto(entity.(domain.TFTPPathRatio), dto.(*dtos.TFTPPathDto))
 	default:
 		return errors.Internal.Newf("can't find route for map entity %+v to dto %+v", dto, entity)
 	}
