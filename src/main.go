@@ -54,6 +54,7 @@ func main() {
 			infrastructure.NewYamlHostNetworkConfigStorage,
 			infrastructure.NewHostNetworkManager,
 			infrastructure.NewEthernetSwitchVLANRepository,
+			infrastructure.NewEthernetSwitchManagerGetter,
 			// Application logic
 			services.NewEthernetSwitchService,
 			services.NewHTTPLogService,

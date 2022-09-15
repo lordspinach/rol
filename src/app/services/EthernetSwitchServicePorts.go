@@ -232,7 +232,7 @@ func (e *EthernetSwitchService) removePortFromVLANs(ctx context.Context, switchI
 		if err != nil {
 			return errors.Internal.Wrap(err, ErrorGetSwitch)
 		}
-		switchManager := GetEthernetSwitchManager(ethernetSwitch)
+		switchManager := e.managerGetter.Get(ethernetSwitch)
 		if switchManager != nil {
 			port, err := e.GetPortByID(ctx, switchID, portID)
 			if err != nil {

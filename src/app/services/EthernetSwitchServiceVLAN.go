@@ -64,7 +64,7 @@ func (e *EthernetSwitchService) createVlansOnSwitch(ctx context.Context, switchI
 	if err != nil {
 		return errors.Internal.Wrap(err, ErrorGetSwitch)
 	}
-	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	switchManager := e.managerGetter.Get(ethernetSwitch)
 	if switchManager == nil {
 		return nil
 	}
@@ -196,7 +196,7 @@ func (e *EthernetSwitchService) CreateVLAN(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, ErrorGetSwitch)
 	}
-	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	switchManager := e.managerGetter.Get(ethernetSwitch)
 	if switchManager != nil {
 		err = switchManager.SaveConfig()
 		if err != nil {
@@ -242,7 +242,7 @@ func (e *EthernetSwitchService) UpdateVLAN(ctx context.Context, switchID, id uui
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, ErrorGetSwitch)
 	}
-	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	switchManager := e.managerGetter.Get(ethernetSwitch)
 	if switchManager != nil {
 		err = switchManager.SaveConfig()
 		if err != nil {
@@ -279,7 +279,7 @@ func (e *EthernetSwitchService) syncVlanPortsChangesOnSwitch(ctx context.Context
 	if err != nil {
 		return errors.Internal.Wrap(err, ErrorGetSwitch)
 	}
-	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	switchManager := e.managerGetter.Get(ethernetSwitch)
 	if switchManager == nil {
 		return nil
 	}
@@ -350,7 +350,7 @@ func (e *EthernetSwitchService) deleteAllVLANsBySwitchID(ctx context.Context, sw
 	if err != nil {
 		return errors.Internal.Wrap(err, "failed to get switch")
 	}
-	switchManager := GetEthernetSwitchManager(ethernetSwitch)
+	switchManager := e.managerGetter.Get(ethernetSwitch)
 	for _, vlan := range vlans {
 		err = e.vlanRepo.Delete(ctx, vlan.ID)
 		if err != nil {

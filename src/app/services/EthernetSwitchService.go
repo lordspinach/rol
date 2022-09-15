@@ -18,6 +18,7 @@ type EthernetSwitchService struct {
 	portRepo      interfaces.IGenericRepository[domain.EthernetSwitchPort]
 	vlanRepo      interfaces.IGenericRepository[domain.EthernetSwitchVLAN]
 	supportedList *[]domain.EthernetSwitchModel
+	managerGetter interfaces.IEthernetSwitchManagerGetter
 }
 
 //NewEthernetSwitchService constructor for domain.EthernetSwitch service
@@ -28,12 +29,14 @@ type EthernetSwitchService struct {
 //	New ethernet switch service
 func NewEthernetSwitchService(switchRepo interfaces.IGenericRepository[domain.EthernetSwitch],
 	portRepo interfaces.IGenericRepository[domain.EthernetSwitchPort],
-	vlanRepo interfaces.IGenericRepository[domain.EthernetSwitchVLAN]) (*EthernetSwitchService, error) {
+	vlanRepo interfaces.IGenericRepository[domain.EthernetSwitchVLAN],
+	managerGetter interfaces.IEthernetSwitchManagerGetter) (*EthernetSwitchService, error) {
 	ethernetSwitchService := &EthernetSwitchService{
 		switchRepo:    switchRepo,
 		portRepo:      portRepo,
 		vlanRepo:      vlanRepo,
 		supportedList: &[]domain.EthernetSwitchModel{},
+		managerGetter: managerGetter,
 	}
 	return ethernetSwitchService, nil
 }
