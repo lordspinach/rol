@@ -59,7 +59,8 @@ func Test_EthernetSwitchService_Prepare(t *testing.T) {
 	if err != nil {
 		t.Error("failed to create switch port repository")
 	}
-	ethSwitchService, err = services.NewEthernetSwitchService(ethSwitchRepo, ethSwitchPortRepo, ethSwitchVlanRepo)
+	getter := infrastructure.NewEthernetSwitchManagerGetter()
+	ethSwitchService, err = services.NewEthernetSwitchService(ethSwitchRepo, ethSwitchPortRepo, ethSwitchVlanRepo, getter)
 	if err != nil {
 		t.Errorf("create new service failed:  %q", err)
 	}
