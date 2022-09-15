@@ -94,6 +94,10 @@ func (e *EthernetSwitchService) CreatePort(ctx context.Context, switchID uuid.UU
 	if err != nil {
 		return dto, errors.Internal.Wrap(err, "failed to map entity to dto")
 	}
+	err = e.syncPortPOEStatus(ctx, switchID, createDto.EthernetSwitchPortBaseDto)
+	if err != nil {
+		return dto, errors.Internal.Wrap(err, "error sync poe port status")
+	}
 	return dto, nil
 }
 
@@ -129,7 +133,15 @@ func (e *EthernetSwitchService) UpdatePort(ctx context.Context, switchID, id uui
 	}
 	queryBuilder := e.portRepo.NewQueryBuilder(ctx)
 	queryBuilder.Where("EthernetSwitchId", "==", switchID)
-	return Update[dtos.EthernetSwitchPortDto](ctx, e.portRepo, updateDto, id, queryBuilder)
+	updatedPort, err := Update[dtos.EthernetSwitchPortDto](ctx, e.portRepo, updateDto, id, queryBuilder)
+	if err != nil {
+		return dto, err // we already wrap error in Update()
+	}
+	err = e.syncPortPOEStatus(ctx, switchID, updateDto.EthernetSwitchPortBaseDto)
+	if err != nil {
+		return dto, errors.Internal.Wrap(err, "error sync poe port status")
+	}
+	return updatedPort, nil
 }
 
 //GetPorts Get list of ethernet switch ports with filtering and pagination
@@ -269,6 +281,29 @@ func (e *EthernetSwitchService) deleteAllPortsBySwitchID(ctx context.Context, sw
 		err = e.portRepo.Delete(ctx, port.ID)
 		if err != nil {
 			return errors.Internal.Wrap(err, "failed to remove port by id in repository")
+		}
+	}
+	return nil
+}
+
+func (e *EthernetSwitchService) syncPortPOEStatus(ctx context.Context, switchID uuid.UUID, dto dtos.EthernetSwitchPortBaseDto) error {
+	ethernetSwitch, err := e.switchRepo.GetByID(ctx, switchID)
+	if err != nil {
+		return errors.Internal.Wrap(err, ErrorGetSwitch)
+	}
+	switchManager := e.managerGetter.Get(ethernetSwitch)
+	if switchManager == nil {
+		return nil
+	}
+	if dto.POEEnabled {
+		err = switchManager.EnablePOEPort(dto.Name, dto.POEType)
+		if err != nil {
+			return errors.Internal.Wrap(err, "enable poe on port failed")
+		}
+	} else {
+		err = switchManager.DisablePOEPort(dto.Name)
+		if err != nil {
+			return errors.Internal.Wrap(err, "disable poe on port failed")
 		}
 	}
 	return nil
