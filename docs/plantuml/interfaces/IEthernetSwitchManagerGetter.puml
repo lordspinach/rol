@@ -1,0 +1,8 @@
+@startuml
+
+package app {
+    interface IEthernetSwitchManagerGetter {
+        +Get(ethernetSwitch domain.EthernetSwitch) IEthernetSwitchManager
+    }
+}
+@enduml
