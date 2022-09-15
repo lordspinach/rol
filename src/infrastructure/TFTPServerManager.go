@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/pin/tftp"
+	"github.com/pin/tftp/v3"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net"

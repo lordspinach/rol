@@ -1,3 +1,5 @@
+//go:build linux
+
 package tests
 
 import (
@@ -108,7 +110,7 @@ func Test_TFTPServerService_Prepare(t *testing.T) {
 func Test_TFTPServerService_InitializeTest(t *testing.T) {
 	cfg1 := domain.TFTPConfig{
 		Address: tftpTester.tftpAddress,
-		Port:    "69",
+		Port:    "6969",
 		Enabled: true,
 	}
 
@@ -135,7 +137,7 @@ func Test_TFTPServerService_InitializeTest(t *testing.T) {
 	}
 
 	p := "files/testReceive.txt"
-	c, err := tftp.NewClient(fmt.Sprintf("%s:69", tftpTester.tftpAddress))
+	c, err := tftp.NewClient(fmt.Sprintf("%s:6969", tftpTester.tftpAddress))
 	if err != nil {
 		t.Errorf("create tftp client failed: %q", err)
 	}
