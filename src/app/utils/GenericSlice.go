@@ -41,3 +41,15 @@ added:
 	}
 	return deletedElems, addedElems
 }
+
+//RemoveFromSlice removes element from slice by index
+//
+//Parameters:
+//	s - original slice
+//	index - index to delete
+//Returns:
+//	T[] - slice without element
+func RemoveFromSlice[T any](s []T, index int) []T {
+	s[index] = s[len(s)-1]
+	return s[:len(s)-1]
+}

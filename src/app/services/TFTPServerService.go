@@ -210,6 +210,8 @@ func (t *TFTPServerService) Update(ctx context.Context, updateDto dtos.TFTPConfi
 //Return
 //	error - if an error occurs, otherwise nil
 func (t *TFTPServerService) Delete(ctx context.Context, id uuid.UUID) error {
+	t.manager.StopTFTPServer(id)
+	t.manager.DeleteServer(id)
 	err := t.configsRepo.Delete(ctx, id)
 	if err != nil {
 		return errors.Internal.Wrap(err, "failed to delete tftp server config")

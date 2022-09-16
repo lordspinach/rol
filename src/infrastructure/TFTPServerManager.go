@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"rol/app/errors"
+	"rol/app/utils"
 	"rol/domain"
 )
 
@@ -132,4 +133,16 @@ func (t *TFTPServerManager) ServerIsRunning(id uuid.UUID) bool {
 		}
 	}
 	return false
+}
+
+//DeleteServer removes server object from servers slice
+//
+//Params:
+//	id - server ID
+func (t *TFTPServerManager) DeleteServer(id uuid.UUID) {
+	for index, s := range t.servers {
+		if s.config.ID == id {
+			t.servers = utils.RemoveFromSlice(t.servers, index)
+		}
+	}
 }
