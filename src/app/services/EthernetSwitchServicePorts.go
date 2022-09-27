@@ -321,11 +321,14 @@ func (e *EthernetSwitchService) portIsExist(ctx context.Context, switchID, portI
 }
 
 func (e *EthernetSwitchService) getNonexistentPorts(ctx context.Context, switchID uuid.UUID, portsToCheck []uuid.UUID) ([]uuid.UUID, error) {
+	if portsToCheck == nil {
+		return []uuid.UUID{}, nil
+	}
 	queryBuilder := e.portRepo.NewQueryBuilder(ctx)
-	queryBuilder.Where("SwitchID", "==", switchID)
+	queryBuilder.Where("EthernetSwitchID", "==", switchID)
 	orQueryBuilder := e.portRepo.NewQueryBuilder(ctx)
 	for _, port := range portsToCheck {
-		orQueryBuilder.Or("ID", "==", port.ID())
+		orQueryBuilder.Or("ID", "==", port)
 	}
 	queryBuilder.WhereQuery(orQueryBuilder)
 	count, err := e.portRepo.Count(ctx, queryBuilder)
