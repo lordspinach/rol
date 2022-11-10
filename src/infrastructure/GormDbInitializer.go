@@ -2,8 +2,12 @@ package infrastructure
 
 import (
 	"fmt"
+	"gorm.io/driver/sqlite"
+	"os"
+	"path"
 	"rol/app/errors"
 	"rol/domain"
+	"strings"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -22,6 +26,46 @@ func (ns OurNamingSchema) TableName(str string) string {
 	return defaultNamingStrategy.TableName(str)
 }
 
+func newGormDb(cfg domain.DbConfig) (*gorm.DB, error) {
+	switch cfg.Driver {
+	case "mysql":
+		connectionString := fmt.Sprintf("%s:%s@%s(%s:%s)/", cfg.Username, cfg.Password, cfg.Protocol, cfg.Hostname, cfg.Port)
+		err := createDbIfNotExists(connectionString, cfg.DbName)
+		if err != nil {
+			return nil, errors.Internal.Wrap(err, "error creating db")
+		}
+		dialector := mysql.Open(fmt.Sprintf("%s%s%s", connectionString, cfg.DbName, cfg.Parameters))
+		db, err := gorm.Open(dialector, &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Info),
+		})
+		if err != nil {
+			return nil, errors.Internal.Wrap(err, "failed to open mysql db")
+		}
+		return db, nil
+	case "sqlite":
+		dbPath := cfg.SQLite.Filename
+		pathSplit := strings.Split(dbPath, "/")
+		dbName := pathSplit[len(pathSplit)-1]
+
+		if dbPath[0:1] != "/" {
+			executablePath, _ := os.Executable()
+			dbPath = path.Join(path.Dir(executablePath), dbPath)
+		}
+		err := os.MkdirAll(dbPath[:len(dbPath)-len(dbName)], os.ModePerm)
+		if err != nil {
+			return nil, errors.Internal.Wrap(err, "failed to create directory")
+		}
+		dbConnection := sqlite.Open(dbPath)
+		db, err := gorm.Open(dbConnection, &gorm.Config{})
+		if err != nil {
+			return nil, errors.Internal.Wrap(err, "creating sqlite db failed")
+		}
+		return db, nil
+	default:
+		return nil, errors.Internal.New("unsupported db driver")
+	}
+}
+
 //NewGormEntityDb creates new gorm entity database connection and create tables if necessary
 //Params
 //	cfg - application configuration
@@ -30,17 +74,9 @@ func (ns OurNamingSchema) TableName(str string) string {
 //	error - if an error occurs, otherwise nil
 func NewGormEntityDb(cfg *domain.AppConfig) (*gorm.DB, error) {
 	entityCfg := cfg.Database.Entity
-	connectionString := fmt.Sprintf("%s:%s@%s(%s:%s)/", entityCfg.Username, entityCfg.Password, entityCfg.Protocol, entityCfg.Hostname, entityCfg.Port)
-	err := createDbIfNotExists(connectionString, entityCfg.DbName)
+	db, err := newGormDb(entityCfg)
 	if err != nil {
-		return nil, errors.Internal.Wrap(err, "error creating db")
-	}
-	dialector := mysql.Open(fmt.Sprintf("%s%s%s", connectionString, entityCfg.DbName, entityCfg.Parameters))
-	db, err := gorm.Open(dialector, &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		return nil, errors.Internal.Wrap(err, "failed to open db")
+		return nil, errors.Internal.Wrap(err, "failed to create db")
 	}
 	err = db.AutoMigrate(
 		&domain.EthernetSwitch{},
@@ -63,17 +99,9 @@ func NewGormEntityDb(cfg *domain.AppConfig) (*gorm.DB, error) {
 //	error - if an error occurs, otherwise nil
 func NewGormLogDb(cfg *domain.AppConfig) (*GormFxShell, error) {
 	logCfg := cfg.Database.Log
-	connectionString := fmt.Sprintf("%s:%s@%s(%s:%s)/", logCfg.Username, logCfg.Password, logCfg.Protocol, logCfg.Hostname, logCfg.Port)
-	err := createDbIfNotExists(connectionString, logCfg.DbName)
+	db, err := newGormDb(logCfg)
 	if err != nil {
-		return nil, errors.Internal.Wrap(err, "error creating db")
-	}
-	dialector := mysql.Open(fmt.Sprintf("%s%s%s", connectionString, logCfg.DbName, logCfg.Parameters))
-	db, err := gorm.Open(dialector, &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		return nil, errors.Internal.Wrap(err, "failed to open db")
+		return nil, errors.Internal.Wrap(err, "failed to create db")
 	}
 	err = db.AutoMigrate(
 		&domain.HTTPLog{},
