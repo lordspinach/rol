@@ -54,7 +54,6 @@ func main() {
 			infrastructure.NewPinTFTPServerFactory,
 			infrastructure.NewLogrusLogger,
 			infrastructure.NewGormEthernetSwitchPortRepository,
-			infrastructure.NewDeviceTemplateStorage,
 			infrastructure.NewYamlHostNetworkConfigStorage,
 			infrastructure.NewHostNetworkManager,
 			infrastructure.NewGormEthernetSwitchVLANRepository,
@@ -62,6 +61,7 @@ func main() {
 			infrastructure.NewGormDHCP4LeaseRepository,
 			infrastructure.NewGormDHCP4ConfigRepository,
 			infrastructure.NewCoreDHCP4ServerFactory,
+			infrastructure.NewSliceDeviceTemplateRepository,
 			// Application logic
 			services.NewEthernetSwitchService,
 			services.NewHTTPLogService,

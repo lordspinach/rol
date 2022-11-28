@@ -14,18 +14,18 @@ import (
 
 //DeviceTemplateService device template service structure for domain.DeviceTemplate
 type DeviceTemplateService struct {
-	storage interfaces.IGenericTemplateStorage[domain.DeviceTemplate]
-	logger  *logrus.Logger
+	repo   interfaces.IGenericRepository[string, domain.DeviceTemplate]
+	logger *logrus.Logger
 }
 
 //NewDeviceTemplateService constructor for DeviceTemplateService
 //Params
-//	storage - generic storage for domain.DeviceTemplate
+//	repo - generic repo for domain.DeviceTemplate
 //	log - logrus logger
-func NewDeviceTemplateService(storage interfaces.IGenericTemplateStorage[domain.DeviceTemplate], log *logrus.Logger) (*DeviceTemplateService, error) {
+func NewDeviceTemplateService(repository interfaces.IGenericRepository[string, domain.DeviceTemplate], log *logrus.Logger) (*DeviceTemplateService, error) {
 	return &DeviceTemplateService{
-		storage: storage,
-		logger:  log,
+		repo:   repository,
+		logger: log,
 	}, nil
 }
 
@@ -50,15 +50,15 @@ func (d *DeviceTemplateService) GetList(ctx context.Context, search, orderBy, or
 	if pageSize < 1 {
 		pageSizeFinal = 10
 	}
-	queryBuilder := d.storage.NewQueryBuilder(ctx)
+	queryBuilder := d.repo.NewQueryBuilder(ctx)
 	if len(search) > 3 {
 		queryBuilder = d.addSearchInAllFields(search, queryBuilder)
 	}
-	templatesArr, err := d.storage.GetList(ctx, orderBy, orderDirection, pageFinal, pageSizeFinal, queryBuilder)
+	templatesArr, err := d.repo.GetList(ctx, orderBy, orderDirection, pageFinal, pageSizeFinal, queryBuilder)
 	if err != nil {
 		return paginatedItemsDto, err
 	}
-	count, err := d.storage.Count(ctx, queryBuilder)
+	count, err := d.repo.Count(ctx, queryBuilder)
 	if err != nil {
 		return paginatedItemsDto, errors.Internal.Wrap(err, "failed to count device templates")
 	}
@@ -73,16 +73,16 @@ func (d *DeviceTemplateService) GetList(ctx context.Context, search, orderBy, or
 	return paginatedItemsDto, nil
 }
 
-//GetByName Get ethernet switch by name
+//GetByName Get device template by name
 //Params
 //	ctx - context is used only for logging
 //	name - device template name
 //Return
-//	*dtos.DeviceTemplateDto - point to ethernet switch dto
+//	*dtos.DeviceTemplateDto - point to device template dto
 //	error - if an error occurs, otherwise nil
 func (d *DeviceTemplateService) GetByName(ctx context.Context, templateName string) (dtos.DeviceTemplateDto, error) {
 	dto := *new(dtos.DeviceTemplateDto)
-	template, err := d.storage.GetByName(ctx, templateName)
+	template, err := d.repo.GetByID(ctx, templateName)
 	if err != nil {
 		return dto, err
 	}
@@ -94,7 +94,7 @@ func (d *DeviceTemplateService) addSearchInAllFields(search string, queryBuilder
 	template := new(domain.DeviceTemplate)
 	stringFieldNames := &[]string{}
 	utils.GetStringFieldsNames(template, stringFieldNames)
-	queryGroup := d.storage.NewQueryBuilder(nil)
+	queryGroup := d.repo.NewQueryBuilder(context.TODO())
 	for i := 0; i < len(*stringFieldNames); i++ {
 		fieldName := (*stringFieldNames)[i]
 		containPass := strings.Contains(strings.ToLower(fieldName), "pass")

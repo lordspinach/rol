@@ -2,6 +2,7 @@ package domain
 
 //DeviceTemplate represents yaml device template as a structure
 type DeviceTemplate struct {
+	Entity[string]
 	//Name template name
 	Name string `yaml:"name"`
 	//Model device model
