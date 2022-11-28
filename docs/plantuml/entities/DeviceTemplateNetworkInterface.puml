@@ -10,15 +10,15 @@ package domain {
         --
         +Management boolean
     }
-    note right of DeviceTemplateNetworkInterface::Name
+    note left of DeviceTemplateNetworkInterface::Name
       This field is unique within device template network interfaces
     end note
 
-    note right of DeviceTemplateNetworkInterface::POEIn
+    note left of DeviceTemplateNetworkInterface::POEIn
       Only one network interface can be mark as POEIn
     end note
 
-    note right of DeviceTemplateNetworkInterface::Management
+    note left of DeviceTemplateNetworkInterface::Management
       Only one network interface can be mark as management
     end note
 }

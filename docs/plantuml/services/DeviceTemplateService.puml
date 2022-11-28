@@ -1,17 +1,37 @@
 @startuml
 
-!include ../storages/YamlDeviceTemplateStorage.puml
+!include ../repositories/SliceDeviceTemplateRepository.puml
 !include ../dto/DeviceTemplate/DeviceTemplateDto.puml
 
 package app {
     class DeviceTemplateService {
-        -storage IGenericTemplateStorage<DeviceTemplate>
+        -repo   interfaces.IGenericRepository<string, domain.DeviceTemplate>
         --
         +GetList(ctx context.Context, search, orderBy, orderDirection string, page, pageSize int) (dtos.PaginatedItemsDto[dtos.DeviceTemplateDto], error)
         --
         +GetByName(ctx context.Context, name string) (dtos.DeviceTemplateDto, error)
     }
-    DeviceTemplateService::storage -- YamlDeviceTemplateStorage
+    DeviceTemplateService::repo -- SliceDeviceTemplateRepository
+
+    note as DeviceTemplateTypes
+    DTOs that are used by this service
+    end note
+
+    DeviceTemplateService .down. DeviceTemplateTypes
+
+    DeviceTemplateTypes .down.. DeviceTemplateDto
+
+    DeviceTemplateControlDesc -[hidden]down- DeviceTemplateService
+
+    DeviceTemplateService -[hidden]down- dtos
+
+    YamlManyFilesContext -[hidden]down- IDataContext
+
+    DeviceTemplateService -[hidden]down- IGenericRepository
+
+
 }
+
+
 
 @enduml

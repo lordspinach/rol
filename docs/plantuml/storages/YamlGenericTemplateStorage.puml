@@ -1,9 +1,0 @@
-@startuml
-!include ../interfaces/IGenericTemplateStorage.puml
-
-package infrastructure {
-    class YamlGenericTemplateStorage<TemplateType>
-
-    YamlGenericTemplateStorage .down.|> IGenericTemplateStorage
-}
-@enduml

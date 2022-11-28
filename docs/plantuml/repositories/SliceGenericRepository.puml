@@ -1,0 +1,14 @@
+@startuml SliceGenericRepository
+
+!include ../interfaces/IGenericRepository.puml
+
+
+package infrastructure {
+    class SliceGenericRepository<EntityIDType comparable, EntityType interfaces.IEntityModel<EntityIDType>> {
+        -sliceCtx interfaces.IDataContext<EntityIDType, EntityType>
+    }
+
+    SliceGenericRepository .down.|> IGenericRepository
+}
+
+@enduml

@@ -1,0 +1,37 @@
+@startuml IDataContext
+
+package app {
+    interface IDataContext<ItemIdType comparable, ItemType IEntityModel<ItemIdType>> {
+        +Add(item ItemType) (ItemType, error)
+        --
+        +Update(id ItemIdType, item ItemType) error
+        --
+        +Delete(id ItemIdType) error
+        --
+        +Get() (map[ItemIdType]ItemType, error)
+        --
+        +GetByID(id ItemIdType) (ItemType, error)
+    }
+
+    note left of IDataContext::Add
+        Add new item
+    end note
+
+    note left of IDataContext::Update
+        Update item by id
+    end note
+
+    note left of IDataContext::Delete
+        Delete item by id
+    end note
+
+    note left of IDataContext::Get
+        Get all items
+    end note
+
+    note left of IDataContext::GetByID
+        GetByID get item by id
+    end note
+}
+
+@enduml

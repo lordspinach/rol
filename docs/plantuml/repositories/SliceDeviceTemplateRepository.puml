@@ -1,0 +1,26 @@
+@startuml SliceDeviceTemplateRepository
+
+!include SliceGenericRepository.puml
+!include ../contexts/YamlManyFilesContext.puml
+!include ../entities/DeviceTemplate.puml
+
+package infrastructure {
+    class SliceDeviceTemplateRepository
+
+    SliceDeviceTemplateRepository -down-* SliceGenericRepository
+
+    note "EntityType is DeviceTemplate \nEntityIDType is string" as DTTypeNote
+
+    SliceGenericRepository::sliceCtx -- YamlManyFilesContext
+    SliceDeviceTemplateRepository .down. DTTypeNote
+    SliceGenericRepository <.up. DTTypeNote
+    DeviceTemplate .. DTTypeNote
+
+    IDataContext -[hidden]- IGenericRepository
+
+    DeviceTemplateNetworkInterface -[hidden]u- BootStageTemplate
+}
+
+infrastructure -[hidden]- domain
+
+@enduml

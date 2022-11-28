@@ -15,4 +15,10 @@ package controllers{
 
 DeviceTemplateController::service -- DeviceTemplateService
 
+DeviceTemplateController -[hidden]l- BootStageTemplateFile
+
+DeviceTemplateController -[hidden]l- DeviceTemplateService
+
+
+
 @enduml

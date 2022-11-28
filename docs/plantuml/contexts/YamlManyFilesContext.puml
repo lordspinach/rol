@@ -1,0 +1,12 @@
+@startuml YamlManyFilesContext
+
+!include ../interfaces/IDataContext.puml
+
+package infrastructure {
+    class YamlManyFilesContext<ItemIdType comparable, ItemType interfaces.IEntityModel<ItemIdType>> {
+    }
+
+    YamlManyFilesContext .down.|> IDataContext
+}
+
+@enduml
