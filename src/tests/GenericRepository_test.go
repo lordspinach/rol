@@ -9,6 +9,9 @@ var (
 	repoTesters = []IGenericRepositoryTester{
 		NewGormSQLiteGenericRepositoryTester[uuid.UUID, TestEntityUUID](),
 		NewGormSQLiteGenericRepositoryTester[int, TestEntityInt](),
+		NewYamlSliceGenericRepositoryTester[string, TestEntityString](),
+		NewYamlSliceGenericRepositoryTester[int, TestEntityInt](),
+		NewYamlSliceGenericRepositoryTester[uuid.UUID, TestEntityUUID](),
 	}
 )
 

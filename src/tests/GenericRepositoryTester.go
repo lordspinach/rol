@@ -1,3 +1,4 @@
+// Package tests contains project unit tests and all related structs and interfaces
 package tests
 
 import (
@@ -104,6 +105,11 @@ type TestEntityInt struct {
 	BaseTestEntity[int]
 }
 
+//TestEntityString base test entity struct with string id
+type TestEntityString struct {
+	BaseTestEntity[string]
+}
+
 //ITestEntity default interface that we need for repository entity testing
 type ITestEntity[IDType comparable] interface {
 	interfaces.IEntityModel[IDType]
@@ -192,6 +198,12 @@ func (t *GenericRepositoryTester[IDType, EntityType]) createPredefinedTestEntity
 		}}
 		return entityObj.(EntityType)
 	}
+	if _, ok := entityObj.(interfaces.IEntityModel[string]); ok {
+		entityObj = TestEntityString{BaseTestEntity: BaseTestEntity[string]{
+			TestEntityFields: GetTestEntityFieldsWithIteration(iteration),
+		}}
+		return entityObj.(EntityType)
+	}
 	t.t.Error("Selected entity is not implement IEntityModel[IDType] interface")
 	return *entity
 }
@@ -211,6 +223,9 @@ func (t *GenericRepositoryTester[IDType, EntityType]) getNotExistedID() IDType {
 		return idObj.(IDType)
 	case uuid.UUID:
 		idObj = uuid.New()
+		return idObj.(IDType)
+	case string:
+		idObj = uuid.New().String()
 		return idObj.(IDType)
 	default:
 		t.t.Error("getNotExistedID: id type is not supported")
@@ -537,7 +552,7 @@ func (t *GenericRepositoryTester[IDType, EntityType]) TestCount() {
 	t.t.Run(fmt.Sprintf("%s/ByIDOneElem/OK", t.getTestBaseName()),
 		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
 			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
-			queryBuilder.Where("Id", "==", entities[0].GetID())
+			queryBuilder.Where("ID", "==", entities[0].GetID())
 			count, err := t.repo.Count(t.ctx, queryBuilder)
 			assert.NoError(t.t, err)
 			assert.Equal(t.t, 1, count)
@@ -545,8 +560,8 @@ func (t *GenericRepositoryTester[IDType, EntityType]) TestCount() {
 	t.t.Run(fmt.Sprintf("%s/ByIDTwoElem/OK", t.getTestBaseName()),
 		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
 			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
-			queryBuilder.Where("Id", "==", entities[0].GetID()).
-				Or("Id", "==", entities[1].GetID())
+			queryBuilder.Where("ID", "==", entities[0].GetID()).
+				Or("ID", "==", entities[1].GetID())
 			count, err := t.repo.Count(t.ctx, queryBuilder)
 			assert.NoError(t.t, err)
 			assert.Equal(t.t, 2, count)
