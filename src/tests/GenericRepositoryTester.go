@@ -122,6 +122,7 @@ type IGenericRepositoryTester interface {
 	TestDeleteAll()
 	TestGetByID()
 	TestGetByIDExtended()
+	TestGetList()
 	TestDelete()
 	TestIsExist()
 	TestCount()
@@ -580,5 +581,172 @@ func (t *GenericRepositoryTester[IDType, EntityType]) TestCount() {
 			countIterSecond, err = t.repo.Count(t.ctx, queryBuilder)
 			assert.NoError(t.t, err)
 			assert.Equal(t.t, 0, countIterSecond)
+		}))
+}
+
+//TestGetList testing for GetList method
+func (t *GenericRepositoryTester[IDType, EntityType]) TestGetList() {
+	t.t.Run(fmt.Sprintf("%s/NoOrderParams/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, nil)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 3, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/NegativePageAndPageSize/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			list, err := t.repo.GetList(t.ctx, "", "", -1, -1, nil)
+			assert.Equal(t.t, true, errors.As(err, errors.Internal))
+			assert.Equal(t.t, 0, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/OrderByAscending/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			list, err := t.repo.GetList(t.ctx, "Iterator", "asc", 1, 3, nil)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 0, list[0].GetDataFields().Iterator)
+		}))
+	t.t.Run(fmt.Sprintf("%s/OrderByDescending/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			list, err := t.repo.GetList(t.ctx, "Iterator", "desc", 1, 3, nil)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 2, list[0].GetDataFields().Iterator)
+		}))
+	t.t.Run(fmt.Sprintf("%s/OrderByNonExistentField/Error", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			list, err := t.repo.GetList(t.ctx, "NonExistentField", "desc", 1, 3, nil)
+			assert.Equal(t.t, true, errors.As(err, errors.Internal))
+			assert.Equal(t.t, 0, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/Pagination/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(10, func(entities []EntityType) {
+			fList, err := t.repo.GetList(t.ctx, "Iterator", "asc", 1, 5, nil)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, true, fList[0].GetDataFields().Iterator == 0)
+			sList, err := t.repo.GetList(t.ctx, "Iterator", "asc", 2, 5, nil)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, true, sList[0].GetDataFields().Iterator == 5)
+		}))
+	t.t.Run(fmt.Sprintf("%s/PageSize/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 1, nil)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 1, len(list))
+			count, err := t.repo.Count(t.ctx, nil)
+			assert.Equal(t.t, 3, count)
+
+		}))
+	t.t.Run(fmt.Sprintf("%s/EmptyConditions/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 3, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/NotExistedFieldCondition/Error", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("NonExistentField", "==", t.getNotExistedID())
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.Equal(t.t, true, errors.As(err, errors.Internal))
+			assert.Equal(t.t, 0, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/OneFieldCondition/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("ID", "==", entities[1].GetID())
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 1, len(list))
+			assert.Equal(t.t, true, list[0].GetID() == entities[1].GetID())
+		}))
+	t.t.Run(fmt.Sprintf("%s/NonExistentIDCondition/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("ID", "==", t.getNotExistedID())
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 0, len(list))
+		}))
+
+	t.t.Run(fmt.Sprintf("%s/FilterByWrongType/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("SecondString", "==", 1)
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 0, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/FilterByNilField/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("NullDate", "==", nil)
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 3, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/SearchFilter/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("SearchString", "LIKE", "%example%")
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 3, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/OrFilter/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Or("Iterator", "==", 0).Or("Iterator", "==", 2)
+			list, err := t.repo.GetList(t.ctx, "Iterator", "asc", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 2, len(list))
+			assert.Equal(t.t, true, list[0].GetDataFields().Iterator == 0)
+			assert.Equal(t.t, true, list[1].GetDataFields().Iterator == 2)
+		}))
+	t.t.Run(fmt.Sprintf("%s/NestedWhereFilter/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("SecondString", "==", "second")
+			nestedQuery := t.repo.NewQueryBuilder(t.ctx)
+			nestedQuery.Where("Iterator", ">", 0).Where("Iterator", "<", 2)
+			queryBuilder = queryBuilder.WhereQuery(nestedQuery)
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 1, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/NestedOrFilter/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(3, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("Iterator", "==", 0)
+			nestedQuery := t.repo.NewQueryBuilder(t.ctx)
+			nestedQuery.Where("Iterator", "==", 2)
+			queryBuilder = queryBuilder.OrQuery(nestedQuery)
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 2, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/TwoNestedWhereFilters/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(5, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("SecondString", "==", "second")
+			fNestedQuery := t.repo.NewQueryBuilder(t.ctx)
+			fNestedQuery.Where("Iterator", ">", 0).Where("Iterator", "<", 4)
+			sNestedQuery := t.repo.NewQueryBuilder(t.ctx)
+			sNestedQuery.Where("Iterator", ">", 2)
+			queryBuilder = queryBuilder.WhereQuery(fNestedQuery).WhereQuery(sNestedQuery)
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 1, len(list))
+		}))
+	t.t.Run(fmt.Sprintf("%s/TwoNestedOrFilters/OK", t.getTestBaseName()),
+		t.createEntitiesAndDeferClean(5, func(entities []EntityType) {
+			queryBuilder := t.repo.NewQueryBuilder(t.ctx)
+			queryBuilder.Where("Iterator", "==", 0)
+			fNestedQuery := t.repo.NewQueryBuilder(t.ctx)
+			fNestedQuery.Where("Iterator", "==", 2)
+			sNestedQuery := t.repo.NewQueryBuilder(t.ctx)
+			sNestedQuery.Where("Iterator", "==", 3)
+			queryBuilder = queryBuilder.OrQuery(fNestedQuery).OrQuery(sNestedQuery)
+			list, err := t.repo.GetList(t.ctx, "", "", 1, 3, queryBuilder)
+			assert.NoError(t.t, err)
+			assert.Equal(t.t, 3, len(list))
 		}))
 }

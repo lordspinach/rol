@@ -154,6 +154,9 @@ func generateOrderString(orderBy string, orderDirection string) string {
 //	error - if an error occurs, otherwise nil
 func (g *GormGenericRepository[EntityIDType, EntityType]) GetList(ctx context.Context, orderBy string, orderDirection string, page int, size int, queryBuilder interfaces.IQueryBuilder) ([]EntityType, error) {
 	g.log(ctx, "debug", fmt.Sprintf("GetList: IN: orderBy=%s, orderDirection=%s, page=%d, size=%d, queryBuilder=%s", orderBy, orderDirection, page, size, queryBuilder))
+	if page < 0 || size < 0 {
+		return nil, errors.Internal.New("page and page size cannot be negative")
+	}
 	model := new(EntityType)
 	entities := []EntityType{}
 	offset := int64((page - 1) * size)

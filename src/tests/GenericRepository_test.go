@@ -40,6 +40,13 @@ func Test_GenericRepo_GetByIDExtended(t *testing.T) {
 	}
 }
 
+func Test_GenericRepo_GetList(t *testing.T) {
+	for _, tester := range repoTesters {
+		tester.SetTesting(t)
+		tester.TestGetList()
+	}
+}
+
 func Test_GenericRepo_Delete(t *testing.T) {
 	for _, tester := range repoTesters {
 		tester.SetTesting(t)
