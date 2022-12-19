@@ -63,7 +63,7 @@ func validationErrorToValidationErrorDto(err error) dtos.ValidationErrorDto {
 //if error = nil, then abort with http.StatusInternalServerError
 func abortWithStatusByErrorType(ctx *gin.Context, err error) {
 	if errors.As(err, errors.Internal) || errors.As(err, errors.NoType) {
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	} else if errors.As(err, errors.Validation) {
 		ctx.JSON(http.StatusBadRequest, validationErrorToValidationErrorDto(err))
@@ -72,7 +72,7 @@ func abortWithStatusByErrorType(ctx *gin.Context, err error) {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
 	}
-	ctx.AbortWithStatus(http.StatusInternalServerError)
+	_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 }
 
 //handle current request by error type, if error = nil, set http status to 204 (No Content)

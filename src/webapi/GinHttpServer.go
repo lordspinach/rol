@@ -27,7 +27,7 @@ type GinHTTPServer struct {
 func NewGinHTTPServer(log *logrus.Logger, config *domain.AppConfig) *GinHTTPServer {
 	ginEngine := gin.New()
 	url := ginSwagger.URL("swagger/doc.json")
-	ginEngine.Use(middleware.Logger(log), middleware.Recovery(log))
+	ginEngine.Use(middleware.Logger(log, "/swagger/", "/log/"), middleware.Recovery(log))
 	ginEngine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 	return &GinHTTPServer{
 		Engine:  ginEngine,

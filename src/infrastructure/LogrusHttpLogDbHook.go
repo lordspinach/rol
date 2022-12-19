@@ -9,7 +9,6 @@ import (
 	"rol/app/interfaces"
 	"rol/app/utils"
 	"rol/domain"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,9 +18,6 @@ import (
 
 //HTTPBufSize buffer size for async hooks
 var HTTPBufSize uint = 8192
-
-const httpAPIName = "httplog"
-const appAPIName = "applog"
 
 //HTTPHook log hook struct
 type HTTPHook struct {
@@ -41,7 +37,7 @@ type HTTPAsyncHook struct {
 }
 
 var httpInsertFunc = func(entry *logrus.Entry, repository interfaces.IGenericRepository[uuid.UUID, domain.HTTPLog]) error {
-	if entry.Data["method"] != nil && !fromLogController(entry) {
+	if entry.Data["method"] != nil {
 		ent := newEntityFromHTTP(entry)
 		_, err := repository.Insert(nil, *ent)
 		if err != nil {
@@ -209,13 +205,4 @@ func (h *HTTPHook) Levels() []logrus.Level {
 		logrus.InfoLevel,
 		logrus.DebugLevel,
 	}
-}
-
-func fromLogController(entry *logrus.Entry) bool {
-	if entry.Data["path"] == nil {
-		return false
-	} else if strings.Contains(entry.Data["path"].(string), httpAPIName) || strings.Contains(entry.Data["path"].(string), appAPIName) {
-		return true
-	}
-	return false
 }

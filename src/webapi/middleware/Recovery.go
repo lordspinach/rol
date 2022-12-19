@@ -11,7 +11,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"net"
-	"net/http/httputil"
 	"os"
 	"strings"
 	"time"
@@ -102,42 +101,11 @@ func Recovery(logger *logrus.Logger) gin.HandlerFunc {
 				}
 				if logger != nil {
 					stack := stack(3)
-					httpRequest, _ := httputil.DumpRequest(c.Request, false)
-					headers := strings.Split(string(httpRequest), "\r\n")
-					for idx, header := range headers {
-						current := strings.Split(header, ":")
-						if current[0] == "Authorization" {
-							headers[idx] = current[0] + ": *"
-						}
-					}
-					headersToStr := strings.Join(headers, "\r\n")
-
-					var bodyBytes []byte
-					if c.Request.Body != nil {
-						bodyBytes, _ = ioutil.ReadAll(c.Request.Body)
-						// Restore the io.ReadCloser to its original state
-						c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-					}
-
 					entry := logger.WithFields(logrus.Fields{
-						"headers": headersToStr,
-						"error":   err,
-						"body":    string(bodyBytes),
-						"stack":   string(stack),
+						"source":   string(stack),
+						"actionID": c.GetHeader("X-Request-ID"),
 					})
-
-					entry.Error()
-
-					//if brokenPipe {
-					//	logger.Printf("%s\n%s%s", err, headersToStr, reset)
-					//} else if gin.IsDebugging() {
-					//	fmt.Printf("[BODY] %s\n", string(bodyBytes))
-					//	logger.Printf("[Recovery] %s panic recovered:\n%s\n%s\n%s%s\n",
-					//		TimeFormat(time.Now()), headersToStr, err, stack, reset)
-					//} else {
-					//	logger.Printf("[Recovery] %s panic recovered:\n%s\n%s%s\n",
-					//		TimeFormat(time.Now()), err, stack, reset)
-					//}
+					entry.Panic(err)
 				}
 				if brokenPipe {
 					// If the connection is dead, we can't write a status to it.

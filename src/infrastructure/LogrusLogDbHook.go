@@ -7,6 +7,7 @@ import (
 	"rol/app/errors"
 	"rol/app/interfaces"
 	"rol/domain"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,7 +36,7 @@ type AppAsyncHook struct {
 }
 
 var insertAppFunc = func(entry *logrus.Entry, repository interfaces.IGenericRepository[uuid.UUID, domain.AppLog]) error {
-	if entry.Data["method"] == nil && !fromLogController(entry) {
+	if entry.Data["method"] == nil {
 		ent := newEntityFromApp(entry)
 		_, err := repository.Insert(nil, *ent)
 		if err != nil {
@@ -59,11 +60,29 @@ var asyncAppInsertFunc = func(entry *logrus.Entry, repository interfaces.IGeneri
 func newEntityFromApp(entry *logrus.Entry) *domain.AppLog {
 	var actionID uuid.UUID
 	var source string
+	var messagePrefix string
 	if entry.Data["actionID"] != nil {
 		actionID = entry.Data["actionID"].(uuid.UUID)
 	}
 	if entry.Data["source"] != nil {
 		source = entry.Data["source"].(string)
+	}
+
+	var sb strings.Builder
+	if _, ok := entry.Data["file"]; ok {
+		sb.WriteString(entry.Data["file"].(string) + ":")
+	}
+	if _, ok := entry.Data["line"]; ok {
+		line := entry.Data["line"].(int)
+		sb.WriteString(fmt.Sprintf("%d", line))
+	}
+	if sb.String() != "" {
+		messagePrefix = sb.String() + "\n"
+	}
+	if source == "" {
+		source = sb.String()
+	} else {
+		entry.Message = messagePrefix + entry.Message
 	}
 	return &domain.AppLog{
 		EntityUUID: domain.EntityUUID{
